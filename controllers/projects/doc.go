@@ -2,9 +2,10 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
+
+	"github.com/1975210542/OPMS/controllers"
 	"os"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ func (this *DocProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -49,10 +50,10 @@ func (this *DocProjectController) Get() {
 	condArr["sort"] = sort
 	condArr["keywords"] = keywords
 
-	countDocs := CountDocs(condArr)
+	countDocs := projects.CountDocs(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countDocs)
-	_, _, doc := ListProjectDocs(condArr, page, offset)
+	_, _, doc := projects.ListProjectDocs(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -77,7 +78,7 @@ func (this *FormDocProjectController) Get() {
 		}
 		idstr := this.Ctx.Input.Param(":id")
 		id, _ := strconv.Atoi(idstr)
-		doc, _ := GetProjectDocs(int64(id))
+		doc, _ := projects.GetProjectDocs(int64(id))
 		this.Data["docs"] = doc
 		projectId = doc.Projectid
 	} else if uriarr[2] == "add" {
@@ -85,7 +86,7 @@ func (this *FormDocProjectController) Get() {
 		if !strings.Contains(this.GetSession("userPermission").(string), "doc-add") {
 			this.Abort("401")
 		}
-		var doc ProjectsDocs
+		var doc projects.ProjectsDocs
 		doc.Sort = 1
 		this.Data["docs"] = doc
 		idstr := this.Ctx.Input.Param(":id")
@@ -93,7 +94,7 @@ func (this *FormDocProjectController) Get() {
 		projectId = int64(id)
 	}
 
-	project, err := GetProject(projectId)
+	project, err := projects.GetProject(projectId)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -117,7 +118,7 @@ func (this *FormDocProjectController) Post() {
 	projectid, _ := this.GetInt64("projectid")
 	userid := this.BaseController.UserUserId
 
-	var doc ProjectsDocs
+	var doc projects.ProjectsDocs
 	doc.Userid = userid
 	doc.Projectid = projectid
 	doc.Title = title
@@ -160,9 +161,9 @@ func (this *FormDocProjectController) Post() {
 	if docid <= 0 {
 		docid = utils.SnowFlakeId()
 		doc.Id = docid
-		err = AddDocs(doc)
+		err = projects.AddDocs(doc)
 	} else {
-		err = UpdateDocs(docid, doc)
+		err = projects.UpdateDocs(docid, doc)
 	}
 
 	if err == nil {
@@ -185,9 +186,9 @@ func (this *ShowDocProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
 
-	doc, _ := GetProjectDocs(int64(id))
+	doc, _ := projects.GetProjectDocs(int64(id))
 
-	project, err := GetProject(doc.Projectid)
+	project, err := projects.GetProject(doc.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -214,7 +215,7 @@ func (this *AjaxDeleteDocPorjectController) Post() {
 		return
 	}
 
-	err := DeleteDoc(ids, this.BaseController.UserUserId)
+	err := projects.DeleteDoc(ids, this.BaseController.UserUserId)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

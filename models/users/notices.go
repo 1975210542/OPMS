@@ -1,11 +1,10 @@
 package users
 
 import (
-	"opms/models"
-	"time"
-
+	"github.com/1975210542/OPMS/models"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"time"
 )
 
 type Notices struct {

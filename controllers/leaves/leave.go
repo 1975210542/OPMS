@@ -2,11 +2,12 @@ package leaves
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/leaves"
-	. "opms/models/messages"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/leaves"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/users"
+
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -58,10 +59,10 @@ func (this *ManageLeaveController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countLeave := CountLeave(condArr)
+	countLeave := leaves.CountLeave(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countLeave)
-	_, _, leaves := ListLeave(condArr, page, offset)
+	_, _, leaves := leaves.ListLeave(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -103,10 +104,10 @@ func (this *ApprovalLeaveController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countLeave := CountLeaveApproval(condArr)
+	countLeave := leaves.CountLeaveApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countLeave)
-	_, _, leaves := ListLeaveApproval(condArr, page, offset)
+	_, _, leaves := leaves.ListLeaveApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -127,19 +128,19 @@ func (this *ShowLeaveController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	leave, err := GetLeave(int64(id))
+	leave, err := leaves.GetLeave(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["leave"] = leave
-	_, _, approvers := ListLeaveApproverProcess(leave.Id)
+	_, _, approvers := leaves.ListLeaveApproverProcess(leave.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != leave.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckLeaveApprover(leave.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := leaves.CheckLeaveApprover(leave.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -202,16 +203,16 @@ func (this *ShowLeaveController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var leave LeavesApprover
+	var leave leaves.LeavesApprover
 	leave.Status = status
 	leave.Summary = summary
 	leave.Leaveid = leaveid
-	err := UpdateLeavesApprover(approverid, leave)
+	err := leaves.UpdateLeavesApprover(approverid, leave)
 
 	if err == nil {
 		//消息通知
-		lev, _ := GetLeave(leaveid)
-		var msg Messages
+		lev, _ := leaves.GetLeave(leaveid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = lev.Userid
@@ -223,7 +224,7 @@ func (this *ShowLeaveController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/leave/approval/" + fmt.Sprintf("%d", leaveid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -240,11 +241,11 @@ func (this *AddLeaveController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "leave-add") {
 		this.Abort("401")
 	}
-	var leave Leaves
+	var leave leaves.Leaves
 	this.Data["leave"] = leave
 
-	_, _, users := ListUserFind()
-	this.Data["users"] = users
+	_, _, us := users.ListUserFind()
+	this.Data["users"] = us
 
 	this.TplName = "leaves/form.tpl"
 }
@@ -312,7 +313,7 @@ func (this *AddLeaveController) Post() {
 		}
 	}
 
-	var leave Leaves
+	var leave leaves.Leaves
 	leaveid := utils.SnowFlakeId()
 	leave.Id = leaveid
 	leave.Userid = this.BaseController.UserUserId
@@ -324,11 +325,11 @@ func (this *AddLeaveController) Post() {
 	leave.Picture = filepath
 	leave.Approverids = approverids
 
-	err = AddLeave(leave)
+	err = leaves.AddLeave(leave)
 
 	if err == nil {
 		//审批人入库
-		var leaveApp LeavesApprover
+		var leaveApp leaves.LeavesApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -336,7 +337,7 @@ func (this *AddLeaveController) Post() {
 			leaveApp.Id = id
 			leaveApp.Userid = int64(userid)
 			leaveApp.Leaveid = leaveid
-			AddLeavesApprover(leaveApp)
+			leaves.AddLeavesApprover(leaveApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘请假列表’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", leaveid)}
@@ -357,7 +358,7 @@ func (this *EditLeaveController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	leave, _ := GetLeave(int64(id))
+	leave, _ := leaves.GetLeave(int64(id))
 
 	if leave.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -434,7 +435,7 @@ func (this *EditLeaveController) Post() {
 		}
 	}
 
-	var leave Leaves
+	var leave leaves.Leaves
 	leave.Type = ltype
 	leave.Started = startedtime
 	leave.Ended = endedtime
@@ -442,7 +443,7 @@ func (this *EditLeaveController) Post() {
 	leave.Reason = reason
 	leave.Picture = filepath
 
-	err = UpdateLeave(id, leave)
+	err = leaves.UpdateLeave(id, leave)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "请假修改成功", "id": fmt.Sprintf("%d", id)}
@@ -467,7 +468,7 @@ func (this *AjaxLeaveDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	leave, _ := GetLeave(int64(id))
+	leave, _ := leaves.GetLeave(int64(id))
 
 	if leave.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -479,7 +480,7 @@ func (this *AjaxLeaveDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteLeave(id)
+	err :=  leaves.DeleteLeave(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -504,7 +505,7 @@ func (this *AjaxLeaveStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	leave, _ := GetLeave(int64(id))
+	leave, _ :=  leaves.GetLeave(int64(id))
 
 	if leave.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -516,14 +517,14 @@ func (this *AjaxLeaveStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeLeaveStatus(id, 2)
+	err :=  leaves.ChangeLeaveStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(leave.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -531,7 +532,7 @@ func (this *AjaxLeaveStatusController) Post() {
 			msg.Subtype = 31
 			msg.Title = "去审批处理"
 			msg.Url = "/leave/approval/" + fmt.Sprintf("%d", leave.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

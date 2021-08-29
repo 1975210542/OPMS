@@ -4,8 +4,8 @@ import (
 	//"opms/initial"
 
 	"fmt"
-	. "opms/models/groups"
-	. "opms/models/messages"
+	"github.com/1975210542/OPMS/models/groups"
+	"github.com/1975210542/OPMS/models/messages"
 	"strconv"
 	"strings"
 
@@ -46,14 +46,14 @@ func (this *BaseController) Prepare() {
 		msgcondArr := make(map[string]string)
 		msgcondArr["touserid"] = fmt.Sprintf("%d", longid)
 		msgcondArr["view"] = "1"
-		countTopMessage := CountMessages(msgcondArr)
-		_, _, topMessages := ListMessages(msgcondArr, 1, 10)
+		countTopMessage := messages.CountMessages(msgcondArr)
+		_, _, topMessages := messages.ListMessages(msgcondArr, 1, 10)
 		this.Data["topMessages"] = topMessages
 		this.Data["countTopMessage"] = countTopMessage
 
 		//fmt.Println(this.GetSession("userGroupid").(string))
 		//左侧导航
-		_, _, leftNav := ListGroupsUserPermission(this.GetSession("userGroupid").(string))
+		_, _, leftNav := groups.ListGroupsUserPermission(this.GetSession("userGroupid").(string))
 		this.Data["leftNav"] = leftNav
 	}
 	this.Data["IsLogin"] = this.IsLogin

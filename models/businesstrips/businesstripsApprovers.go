@@ -1,13 +1,10 @@
 package businesstrips
 
 import (
-	//"fmt"
-	"opms/models"
-	//"opms/utils"
 	"time"
 
-	//"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/1975210542/OPMS/models"
 )
 
 type BusinesstripsApprover struct {

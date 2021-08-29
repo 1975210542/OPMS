@@ -2,9 +2,10 @@ package resumes
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/resumes"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/resumes"
+
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -40,10 +41,10 @@ func (this *ManageResumeController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countResume := CountResumes(condArr)
+	countResume := resumes.CountResumes(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countResume)
-	_, _, resumes := ListResumes(condArr, page, offset)
+	_, _, resumes := resumes.ListResumes(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -77,7 +78,7 @@ func (this *AjaxStatusResumeController) Post() {
 		return
 	}
 
-	err := ChangeResumeStatus(id, status)
+	err := resumes.ChangeResumeStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态更改成功"}
@@ -105,7 +106,7 @@ func (this *AjaxDeleteResumeController) Post() {
 		return
 	}
 
-	err := DeleteResume(id)
+	err := resumes.DeleteResume(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -125,7 +126,7 @@ func (this *AddResumeController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "resume-add") {
 		this.Abort("401")
 	}
-	var resume Resumes
+	var resume resumes.Resumes
 	resume.Sex = 1
 	resume.Status = 1
 	this.Data["resume"] = resume
@@ -181,7 +182,7 @@ func (this *AddResumeController) Post() {
 		}
 	}
 
-	var res Resumes
+	var res resumes.Resumes
 	res.Id = utils.SnowFlakeId()
 	res.Realname = realname
 	res.Sex = sex
@@ -192,7 +193,7 @@ func (this *AddResumeController) Post() {
 	res.Note = note
 	res.Status = status
 	res.Attachment = filepath
-	err = AddResumes(res)
+	err = resumes.AddResumes(res)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功"}
@@ -214,7 +215,7 @@ func (this *EditResumeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	resume, err := GetResumes(int64(id))
+	resume, err := resumes.GetResumes(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -235,7 +236,7 @@ func (this *EditResumeController) Post() {
 		this.ServeJSON()
 		return
 	}
-	_, err := GetResumes(id)
+	_, err := resumes.GetResumes(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "面试者不存在"}
 		this.ServeJSON()
@@ -276,7 +277,7 @@ func (this *EditResumeController) Post() {
 		}
 	}
 
-	var res Resumes
+	var res resumes.Resumes
 	res.Realname = realname
 	res.Sex = sex
 	res.Birth = birth
@@ -286,7 +287,7 @@ func (this *EditResumeController) Post() {
 	res.Note = note
 	res.Status = status
 	res.Attachment = filepath
-	err = UpdateResumes(id, res)
+	err = resumes.UpdateResumes(id, res)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "信息修改成功", "id": fmt.Sprintf("%d", id)}

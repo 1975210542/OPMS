@@ -2,7 +2,7 @@ package messages
 
 import (
 	//"fmt"
-	"opms/models"
+	"github.com/1975210542/OPMS/models"
 	//"opms/utils"
 	"time"
 
@@ -27,6 +27,7 @@ func (this *Messages) TableName() string {
 }
 func init() {
 	orm.RegisterModel(new(Messages))
+	orm.RunSyncdb("default", true, true)
 }
 
 func AddMessages(upd Messages) error {

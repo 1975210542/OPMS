@@ -2,17 +2,16 @@ package checkworks
 
 import (
 	"fmt"
+	"github.com/1975210542/OPMS/models/checkworks"
 
-	"opms/controllers"
-	. "opms/models/checkworks"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/utils"
 	//"os"
 	//"strconv"
 	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
-
 	//"github.com/astaxie/beego/utils/pagination"
 )
 
@@ -37,27 +36,27 @@ func (this *ManageCheckworkController) Get() {
 	condArr["type"] = typec
 	condArr["date"] = date
 	condArr["userId"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
-	_, _, checkworks := ListCheckwork(condArr)
+	_, _, cworks := checkworks.ListCheckwork(condArr)
 	this.Data["condArr"] = condArr
-	this.Data["checkworks"] = checkworks
+	this.Data["checkworks"] = cworks
 
 	this.Data["year"] = time.Now().Format("2006")
 	this.Data["month"] = time.Now().Format("1")
 
 	//统计
-	countCheckworks, _ := CountCheckwork(date, this.BaseController.UserUserId)
+	countCheckworks, _ :=checkworks.CountCheckwork(date, this.BaseController.UserUserId)
 	this.Data["countCheckworks"] = countCheckworks
 
-	_, _, countCheckTypes := CountCheckworkType(date, this.BaseController.UserUserId)
+	_, _, countCheckTypes := checkworks.CountCheckworkType(date, this.BaseController.UserUserId)
 	this.Data["countCheckTypes"] = countCheckTypes
 
-	cleaves, _ := CountCheck("leaves", date, this.BaseController.UserUserId)
+	cleaves, _ := checkworks.CountCheck("leaves", date, this.BaseController.UserUserId)
 	this.Data["cleaves"] = cleaves
 
 	//cbusiness, _ := CountCheck("businesstrips", date, this.BaseController.UserUserId)
 	//this.Data["cbusiness"] = cbusiness
 
-	cgoouts, _ := CountCheck("goouts", date, this.BaseController.UserUserId)
+	cgoouts, _ := checkworks.CountCheck("goouts", date, this.BaseController.UserUserId)
 	this.Data["cgoouts"] = cgoouts
 
 	this.TplName = "checkworks/index.tpl"
@@ -88,28 +87,27 @@ func (this *ManageCheckworkAllController) Get() {
 	condArr["date"] = date
 	condArr["userId"] = fmt.Sprintf("%d", userId)
 
-	_, _, checkworks := ListCheckworkAll(condArr)
-	fmt.Println(checkworks)
+	_, _, cworks :=checkworks. ListCheckworkAll(condArr)
 	this.Data["condArr"] = condArr
-	this.Data["checkworks"] = checkworks
+	this.Data["checkworks"] = cworks
 
 	this.Data["year"] = time.Now().Format("2006")
 	this.Data["month"] = time.Now().Format("1")
 
 	//统计
-	countCheckworks, _ := CountCheckwork(date, userId)
+	countCheckworks, _ := checkworks.CountCheckwork(date, userId)
 	this.Data["countCheckworks"] = countCheckworks
 
-	_, _, countCheckTypes := CountCheckworkType(date, userId)
+	_, _, countCheckTypes :=checkworks. CountCheckworkType(date, userId)
 	this.Data["countCheckTypes"] = countCheckTypes
 
-	cleaves, _ := CountCheck("leaves", date, userId)
+	cleaves, _ := checkworks.CountCheck("leaves", date, userId)
 	this.Data["cleaves"] = cleaves
 
 	//cbusiness, _ := CountCheck("businesstrips", date, userId)
 	//this.Data["cbusiness"] = cbusiness
 
-	cgoouts, _ := CountCheck("goouts", date, userId)
+	cgoouts, _ := checkworks.CountCheck("goouts", date, userId)
 	this.Data["cgoouts"] = cgoouts
 
 	this.TplName = "checkworks/all.tpl"
@@ -127,7 +125,7 @@ func (this *AjaxClockUserController) Post() {
 		this.ServeJSON()
 		return
 	}
-	checkNum := CountClock(this.BaseController.UserUserId)
+	checkNum := checkworks.CountClock(this.BaseController.UserUserId)
 	if checkNum >= 2 {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "你今天打卡次数超过了2次"}
 		this.ServeJSON()
@@ -169,13 +167,13 @@ func (this *AjaxClockUserController) Post() {
 		}
 
 	}
-	var check Checkworks
+	var check checkworks.Checkworks
 	check.Id = utils.SnowFlakeId()
 	check.Userid = this.BaseController.UserUserId
 	check.Clock = clock
 	check.Type = typec
 	check.Ip = this.Ctx.Input.IP()
-	err := AddCheckwork(check)
+	err := checkworks.AddCheckwork(check)
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "打卡成功"}
 	} else {

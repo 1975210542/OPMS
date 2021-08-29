@@ -1,10 +1,10 @@
 package main
 
 import (
+	_ "github.com/1975210542/OPMS/initial"
+	_ "github.com/1975210542/OPMS/routers"
 	"html/template"
 	"net/http"
-	_ "opms/initial"
-	_ "opms/routers"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"

@@ -1,10 +1,9 @@
 package knowledges
 
 import (
-	//"fmt"
-	"opms/models"
-	"opms/utils"
-	//"time"
+	"github.com/1975210542/OPMS/models"
+	"github.com/1975210542/OPMS/utils"
+
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"

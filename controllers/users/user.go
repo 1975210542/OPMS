@@ -2,16 +2,16 @@ package users
 
 import (
 	"fmt"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/albums"
+	"github.com/1975210542/OPMS/models/knowledges"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/models/users"
+
+	"github.com/1975210542/OPMS/utils"
 	"image"
 	"image/jpeg"
 
-	"opms/controllers"
-	. "opms/models/albums"
-	//. "opms/models/groups"
-	. "opms/models/knowledges"
-	. "opms/models/projects"
-	. "opms/models/users"
-	"opms/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -59,13 +59,13 @@ func (this *LoginUserController) Post() {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "请填写密码"}
 		this.ServeJSON()
 	}
-	err, users := LoginUser(username, password)
+	err, us := users.LoginUser(username, password)
 
 	if err == nil {
-		this.SetSession("userLogin", fmt.Sprintf("%d", users.Id)+"||"+users.Username+"||"+users.Avatar)
+		this.SetSession("userLogin", fmt.Sprintf("%d", us.Id)+"||"+us.Username+"||"+us.Avatar)
 		//this.SetSession("userPermission", GetPermissions(users.Id))
 
-		permission, _ := GetPermissionsAll(users.Id)
+		permission, _ := users.GetPermissionsAll(us.Id)
 		this.SetSession("userPermission", permission.Permission)
 		this.SetSession("userGroupid", permission.Groupid)
 		//this.SetSession("userPermissionModel", permission.Model)
@@ -118,10 +118,10 @@ func (this *ManageUserController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countUser := CountUser(condArr)
+	countUser := users.CountUser(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countUser)
-	_, _, user := ListUser(condArr, page, offset)
+	_, _, user := users.ListUser(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -143,49 +143,49 @@ func (this *ShowUserController) Get() {
 	}
 	id, _ := strconv.Atoi(idstr)
 	userId := int64(id)
-	pro, _ := GetProfile(userId)
+	pro, _ := users.GetProfile(userId)
 	if pro.Realname == "" {
 		this.Abort("404")
 	}
 	this.Data["pro"] = pro
-	user, _ := GetUser(userId)
+	user, _ := users.GetUser(userId)
 	this.Data["user"] = user
 
-	this.Data["departName"] = GetDepartsName(pro.Departid)
-	this.Data["positionName"] = GetPositionsName(pro.Positionid)
+	this.Data["departName"] = users.GetDepartsName(pro.Departid)
+	this.Data["positionName"] = users.GetPositionsName(pro.Positionid)
 
 	//我的项目
-	_, _, projects := ListMyProject(userId, 1, 10)
-	this.Data["projects"] = projects
+	_, _, projs := projects.ListMyProject(userId, 1, 10)
+	this.Data["projects"] = projs
 
 	//我的任务
 	condArr := make(map[string]string)
 	condArr["acceptid"] = idstr
-	_, _, tasks := ListProjectTask(condArr, 1, 10)
+	_, _, tasks := projects.ListProjectTask(condArr, 1, 10)
 	this.Data["tasks"] = tasks
 
 	//我的bug
-	_, _, tests := ListProjectTest(condArr, 1, 10)
+	_, _, tests := projects.ListProjectTest(condArr, 1, 10)
 	this.Data["tests"] = tests
 
 	//知识分享
 	if this.BaseController.UserUserId != userId {
 		condArr["userid"] = idstr
 	}
-	_, _, knowledges := ListKnowledge(condArr, 1, 3)
-	this.Data["knowledges"] = knowledges
+	_, _, knows := knowledges.ListKnowledge(condArr, 1, 3)
+	this.Data["knowledges"] = knows
 
 	//相片
 	if this.BaseController.UserUserId != userId {
 		condArr["userid"] = idstr
 	}
-	_, _, albums := ListAlbum(condArr, 1, 8)
-	this.Data["albums"] = albums
+	_, _, albs := albums.ListAlbum(condArr, 1, 8)
+	this.Data["albums"] = albs
 
 	//公告
 	//知识分享
 	condArr["status"] = "1"
-	_, _, notices := ListNotices(condArr, 1, 5)
+	_, _, notices := users.ListNotices(condArr, 1, 5)
 	this.Data["notices"] = notices
 
 	this.TplName = "users/profile.tpl"
@@ -251,7 +251,7 @@ func (this *AvatarUserController) Post() {
 
 	err = jpeg.Encode(file, croppedImg, &jpeg.Options{100})
 	if err == nil {
-		ChangeUserAvatar(this.BaseController.UserUserId, filen)
+		users.ChangeUserAvatar(this.BaseController.UserUserId, filen)
 		this.SetSession("userLogin", fmt.Sprintf("%d", int64(this.BaseController.UserUserId))+"||"+this.BaseController.UserUsername+"||"+filen)
 	}
 	this.Data["json"] = map[string]interface{}{"code": 1, "message": "个性头像设置成功"}
@@ -283,7 +283,7 @@ func (this *AjaxStatusUserController) Post() {
 		return
 	}
 
-	err := ChangeUserStatus(id, status)
+	err := users.ChangeUserStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "用户状态更改成功"}
@@ -306,7 +306,7 @@ func (this *AjaxSearchUserController) Get() {
 	}
 	condArr := make(map[string]string)
 	condArr["keywords"] = username
-	_, _, users := ListUser(condArr, 1, 20)
+	_, _, users := users.ListUser(condArr, 1, 20)
 	/*
 		a := make([]map[string]string, 2)
 		for i := 0; i < 2; i++ {
@@ -334,13 +334,13 @@ func (this *AddUserController) Get() {
 	condArr := make(map[string]string)
 	condArr["status"] = "1"
 
-	_, _, departs := ListDeparts(condArr, 1, 9)
+	_, _, departs := users.ListDeparts(condArr, 1, 9)
 	this.Data["departs"] = departs
 
-	_, _, positions := ListPositions(condArr, 1, 9)
+	_, _, positions := users.ListPositions(condArr, 1, 9)
 	this.Data["positions"] = positions
 
-	var pro UsersProfile
+	var pro users.UsersProfile
 	pro.Sex = 1
 	this.Data["pro"] = pro
 	this.TplName = "users/user-form.tpl"
@@ -425,7 +425,7 @@ func (this *AddUserController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var pro UsersProfile
+	var pro users.UsersProfile
 	pro.Id = id
 	pro.Realname = realname
 	pro.Sex = sex
@@ -442,12 +442,12 @@ func (this *AddUserController) Post() {
 	pro.Positionid = positionid
 	pro.Ip = this.Ctx.Input.IP()
 
-	var user Users
+	var user users.Users
 	user.Id = id
 	user.Username = username
 	user.Password = password
 
-	err = AddUserProfile(user, pro)
+	err = users.AddUserProfile(user, pro)
 
 	if err == nil {
 		//新用户默认权限
@@ -482,21 +482,21 @@ func (this *EditUserController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	pro, err := GetProfile(int64(id))
+	pro, err := users.GetProfile(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["pro"] = pro
 
-	user, _ := GetUser(int64(id))
+	user, _ := users.GetUser(int64(id))
 	this.Data["user"] = user
 
 	condArr := make(map[string]string)
 	condArr["status"] = "1"
-	_, _, departs := ListDeparts(condArr, 1, 9)
+	_, _, departs := users.ListDeparts(condArr, 1, 9)
 	this.Data["departs"] = departs
 
-	_, _, positions := ListPositions(condArr, 1, 9)
+	_, _, positions := users.ListPositions(condArr, 1, 9)
 	this.Data["positions"] = positions
 	this.TplName = "users/user-form.tpl"
 }
@@ -582,14 +582,14 @@ func (this *EditUserController) Post() {
 		return
 	}
 
-	_, err := GetUser(id)
+	_, err := users.GetUser(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "员工不存在"}
 		this.ServeJSON()
 		return
 	}
 
-	var pro UsersProfile
+	var pro users.UsersProfile
 	pro.Realname = realname
 	pro.Sex = sex
 	pro.Birth = birth
@@ -604,14 +604,14 @@ func (this *EditUserController) Post() {
 	pro.Departid = departid
 	pro.Positionid = positionid
 
-	err = UpdateProfile(id, pro)
+	err = users.UpdateProfile(id, pro)
 
-	var user Users
+	var user users.Users
 	user.Username = username
 	if password != "" {
 		user.Password = password
 	}
-	err = UpdateUser(id, user)
+	err = users.UpdateUser(id, user)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "信息修改成功", "id": fmt.Sprintf("%d", id)}
@@ -628,7 +628,7 @@ type EditUserProfileController struct {
 func (this *EditUserProfileController) Get() {
 	userid := this.BaseController.UserUserId
 
-	pro, err := GetProfile(userid)
+	pro, err := users.GetProfile(userid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -685,14 +685,14 @@ func (this *EditUserProfileController) Post() {
 		return
 	}
 
-	_, err := GetUser(userid)
+	_, err := users.GetUser(userid)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "员工不存在"}
 		this.ServeJSON()
 		return
 	}
 
-	var pro UsersProfile
+	var pro users.UsersProfile
 	pro.Realname = realname
 	pro.Sex = sex
 	pro.Birth = birth
@@ -705,7 +705,7 @@ func (this *EditUserProfileController) Post() {
 	pro.Emercontact = emercontact
 	pro.Emerphone = emerphone
 
-	err = UpdateProfile(userid, pro)
+	err = users.UpdateProfile(userid, pro)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "个人资料修改成功", "type": "profile", "id": fmt.Sprintf("%d", userid)}
@@ -748,7 +748,7 @@ func (this *EditUserPasswordController) Post() {
 		return
 	}
 	userid := this.BaseController.UserUserId
-	err := UpdatePassword(userid, oldpwd, newpwd)
+	err := users.UpdatePassword(userid, oldpwd, newpwd)
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "密码修改成功", "id": fmt.Sprintf("%d", userid)}
 	} else {
@@ -768,7 +768,7 @@ func (this *PermissionController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	permission := GetPermissions(int64(id))
+	permission := users.GetPermissions(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -789,12 +789,12 @@ func (this *PermissionController) Post() {
 	model := this.GetString("model")
 	modelc := this.GetString("modelc")
 
-	var per UsersPermissions
+	var per users.UsersPermissions
 	per.Permission = permission
 	per.Model = model
 	per.Modelc = modelc
 
-	err := UpdatePermissions(userid, per)
+	err := users.UpdatePermissions(userid, per)
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "权限设置成功"}
 	} else {

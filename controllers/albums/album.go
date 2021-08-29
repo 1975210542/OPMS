@@ -2,10 +2,10 @@ package albums
 
 import (
 	"fmt"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/albums"
+	"github.com/1975210542/OPMS/utils"
 	"io"
-	"opms/controllers"
-	. "opms/models/albums"
-	"opms/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -47,18 +47,18 @@ func (this *EditAlbumController) Post() {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "请填写标题"}
 		this.ServeJSON()
 	}
-	_, errAttr := GetAlbum(id)
+	_, errAttr := albums.GetAlbum(id)
 	if errAttr != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "相册不存在"}
 		this.ServeJSON()
 	}
 
-	var alb Albums
+	var alb albums.Albums
 	alb.Title = title
 	alb.Summary = summary
 	alb.Status = status
 
-	err = UpdateAlbum(id, alb)
+	err = albums.UpdateAlbum(id, alb)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "相册修改成功", "id": fmt.Sprintf("%d", id)}
@@ -89,7 +89,7 @@ func (this *ListAlbumController) Get() {
 		strName := strings.Split(strn.(string), "||")
 
 		for i, pic := range strPic {
-			var alb Albums
+			var alb albums.Albums
 			alb.Id = utils.SnowFlakeId()
 			alb.Userid = this.BaseController.UserUserId
 			alb.Picture = pic
@@ -97,7 +97,7 @@ func (this *ListAlbumController) Get() {
 			alb.Title = strName[i]
 			alb.Status = 1
 
-			AddAlbum(alb)
+			albums.AddAlbum(alb)
 		}
 		this.DelSession("uploadMultiName")
 		this.DelSession("uploadMultiPic")
@@ -125,10 +125,10 @@ func (this *ListAlbumController) Get() {
 	if filter == "me" {
 		condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 	}
-	countAlbum := CountAlbum(condArr)
+	countAlbum := albums.CountAlbum(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countAlbum)
-	_, _, albums := ListAlbum(condArr, page, offset)
+	_, _, albums := albums.ListAlbum(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["albums"] = albums
@@ -147,13 +147,13 @@ func (this *ShowAlbumController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	album, err := GetAlbum(int64(id))
+	album, err := albums.GetAlbum(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["album"] = album
-	ChangeAlbumRelationNum(album.Id, "view")
-	comments := ListAlbumComment(album.Id, 1, 100)
+	albums.ChangeAlbumRelationNum(album.Id, "view")
+	comments := albums.ListAlbumComment(album.Id, 1, 100)
 	this.Data["comments"] = comments
 	this.TplName = "albums/detail.tpl"
 }
@@ -285,7 +285,7 @@ func (this *AjaxDeleteAlbumController) Post() {
 		return
 	}
 
-	err := DeleteAlbum(id, this.BaseController.UserUserId)
+	err := albums.DeleteAlbum(id, this.BaseController.UserUserId)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

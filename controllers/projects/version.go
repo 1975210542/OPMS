@@ -2,9 +2,9 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -26,7 +26,7 @@ func (this *VersionProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -47,10 +47,10 @@ func (this *VersionProjectController) Get() {
 	condArr["projectid"] = idstr
 	condArr["keywords"] = keywords
 
-	countVersions := CountVersions(condArr)
+	countVersions := projects.CountVersions(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countVersions)
-	_, _, version := ListProjectVersions(condArr, page, offset)
+	_, _, version := projects.ListProjectVersions(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -75,7 +75,7 @@ func (this *FormVersionProjectController) Get() {
 		}
 		idstr := this.Ctx.Input.Param(":id")
 		id, _ := strconv.Atoi(idstr)
-		version, _ := GetProjectVersions(int64(id))
+		version, _ := projects.GetProjectVersions(int64(id))
 		this.Data["versions"] = version
 		projectId = version.Projectid
 	} else if uriarr[2] == "add" {
@@ -83,14 +83,14 @@ func (this *FormVersionProjectController) Get() {
 		if !strings.Contains(this.GetSession("userPermission").(string), "version-add") {
 			//this.Abort("401")
 		}
-		var version ProjectsVersions
+		var version projects.ProjectsVersions
 		this.Data["versions"] = version
 		idstr := this.Ctx.Input.Param(":id")
 		id, _ := strconv.Atoi(idstr)
 		projectId = int64(id)
 	}
 
-	project, err := GetProject(projectId)
+	project, err := projects.GetProject(projectId)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -114,7 +114,7 @@ func (this *FormVersionProjectController) Post() {
 	projectid, _ := this.GetInt64("projectid")
 	userid := this.BaseController.UserUserId
 
-	var version ProjectsVersions
+	var version projects.ProjectsVersions
 	version.Userid = userid
 	version.Projectid = projectid
 	version.Title = title
@@ -157,9 +157,9 @@ func (this *FormVersionProjectController) Post() {
 	if versionid <= 0 {
 		versionid = utils.SnowFlakeId()
 		version.Id = versionid
-		err = AddVersions(version)
+		err = projects.AddVersions(version)
 	} else {
-		err = UpdateVersions(versionid, version)
+		err = projects.UpdateVersions(versionid, version)
 	}
 
 	if err == nil {
@@ -182,9 +182,9 @@ func (this *ShowVersionProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
 
-	version, _ := GetProjectVersions(int64(id))
+	version, _ := projects.GetProjectVersions(int64(id))
 
-	project, err := GetProject(version.Projectid)
+	project, err := projects.GetProject(version.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -211,7 +211,7 @@ func (this *AjaxDeleteVersionPorjectController) Post() {
 		return
 	}
 
-	err := DeleteVersion(ids, this.BaseController.UserUserId)
+	err := projects.DeleteVersion(ids, this.BaseController.UserUserId)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

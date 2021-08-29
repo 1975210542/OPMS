@@ -2,11 +2,11 @@ package overtimes
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/messages"
-	. "opms/models/overtimes"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/overtimes"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"strconv"
 	"strings"
 
@@ -42,10 +42,10 @@ func (this *ManageOvertimeController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countOvertime := CountOvertime(condArr)
+	countOvertime := overtimes.CountOvertime(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countOvertime)
-	_, _, overtimes := ListOvertime(condArr, page, offset)
+	_, _, overtimes := overtimes.ListOvertime(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -87,10 +87,10 @@ func (this *ApprovalOvertimeController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countOvertime := CountOvertimeApproval(condArr)
+	countOvertime := overtimes.CountOvertimeApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countOvertime)
-	_, _, overtimes := ListOvertimeApproval(condArr, page, offset)
+	_, _, overtimes := overtimes.ListOvertimeApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -111,19 +111,19 @@ func (this *ShowOvertimeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	overtime, err := GetOvertime(int64(id))
+	overtime, err := overtimes.GetOvertime(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["overtime"] = overtime
-	_, _, approvers := ListOvertimeApproverProcess(overtime.Id)
+	_, _, approvers := overtimes.ListOvertimeApproverProcess(overtime.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != overtime.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckOvertimeApprover(overtime.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := overtimes.CheckOvertimeApprover(overtime.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -186,16 +186,16 @@ func (this *ShowOvertimeController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var overtime OvertimesApprover
+	var overtime overtimes.OvertimesApprover
 	overtime.Status = status
 	overtime.Summary = summary
 	overtime.Overtimeid = overtimeid
-	err := UpdateOvertimesApprover(approverid, overtime)
+	err := overtimes.UpdateOvertimesApprover(approverid, overtime)
 
 	if err == nil {
 		//消息通知
-		ot, _ := GetOvertime(overtimeid)
-		var msg Messages
+		ot, _ := overtimes.GetOvertime(overtimeid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = ot.Userid
@@ -207,7 +207,7 @@ func (this *ShowOvertimeController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/overtime/approval/" + fmt.Sprintf("%d", overtimeid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -224,10 +224,10 @@ func (this *AddOvertimeController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "overtime-add") {
 		this.Abort("401")
 	}
-	var overtime Overtimes
+	var overtime overtimes.Overtimes
 	this.Data["overtime"] = overtime
 
-	_, _, users := ListUserFind()
+	_, _, users := users.ListUserFind()
 	this.Data["users"] = users
 
 	this.TplName = "overtimes/form.tpl"
@@ -277,7 +277,7 @@ func (this *AddOvertimeController) Post() {
 		return
 	}
 
-	var overtime Overtimes
+	var overtime overtimes.Overtimes
 	overtimeid := utils.SnowFlakeId()
 	overtime.Id = overtimeid
 	overtime.Userid = this.BaseController.UserUserId
@@ -289,11 +289,11 @@ func (this *AddOvertimeController) Post() {
 	overtime.Reason = reason
 	overtime.Approverids = approverids
 
-	err := AddOvertime(overtime)
+	err := overtimes.AddOvertime(overtime)
 
 	if err == nil {
 		//审批人入库
-		var overtimeApp OvertimesApprover
+		var overtimeApp overtimes.OvertimesApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -301,7 +301,7 @@ func (this *AddOvertimeController) Post() {
 			overtimeApp.Id = id
 			overtimeApp.Userid = int64(userid)
 			overtimeApp.Overtimeid = overtimeid
-			AddOvertimesApprover(overtimeApp)
+			overtimes.AddOvertimesApprover(overtimeApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘加班列表’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", overtimeid)}
@@ -322,7 +322,7 @@ func (this *EditOvertimeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	overtime, _ := GetOvertime(int64(id))
+	overtime, _ := overtimes.GetOvertime(int64(id))
 
 	if overtime.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -380,7 +380,7 @@ func (this *EditOvertimeController) Post() {
 		return
 	}
 
-	var overtime Overtimes
+	var overtime overtimes.Overtimes
 	overtime.Started = startedtime
 	overtime.Ended = endedtime
 	overtime.Longtime = longtime
@@ -388,7 +388,7 @@ func (this *EditOvertimeController) Post() {
 	overtime.Way = way
 	overtime.Reason = reason
 
-	err := UpdateOvertime(id, overtime)
+	err := overtimes.UpdateOvertime(id, overtime)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "加班修改成功", "id": fmt.Sprintf("%d", id)}
@@ -413,7 +413,7 @@ func (this *AjaxOvertimeDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	overtime, _ := GetOvertime(int64(id))
+	overtime, _ := overtimes.GetOvertime(int64(id))
 
 	if overtime.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -425,7 +425,7 @@ func (this *AjaxOvertimeDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteOvertime(id)
+	err := overtimes.DeleteOvertime(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -450,7 +450,7 @@ func (this *AjaxOvertimeStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	overtime, _ := GetOvertime(int64(id))
+	overtime, _ := overtimes.GetOvertime(int64(id))
 
 	if overtime.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -462,14 +462,14 @@ func (this *AjaxOvertimeStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeOvertimeStatus(id, 2)
+	err := overtimes.ChangeOvertimeStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(overtime.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -477,7 +477,7 @@ func (this *AjaxOvertimeStatusController) Post() {
 			msg.Subtype = 32
 			msg.Title = "去审批处理"
 			msg.Url = "/overtime/approval/" + fmt.Sprintf("%d", overtime.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

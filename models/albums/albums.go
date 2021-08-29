@@ -1,7 +1,7 @@
 package albums
 
 import (
-	"opms/models"
+	"github.com/1975210542/OPMS/models"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -28,6 +28,7 @@ func (this *Albums) TableName() string {
 
 func init() {
 	orm.RegisterModel(new(Albums))
+	orm.RunSyncdb("default", true, true)
 }
 
 /*

@@ -2,9 +2,9 @@ package users
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"strconv"
 	"strings"
 
@@ -38,10 +38,10 @@ func (this *ManageDepartmentController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countDepart := CountDeparts(condArr)
+	countDepart := users.CountDeparts(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countDepart)
-	_, _, depart := ListDeparts(condArr, page, offset)
+	_, _, depart := users.ListDeparts(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -76,7 +76,7 @@ func (this *AjaxStatusDepartmentController) Post() {
 		return
 	}
 
-	err := ChangeDepartStatus(id, status)
+	err := users.ChangeDepartStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "部门状态更改成功"}
@@ -114,11 +114,11 @@ func (this *AddDepartmentController) Post() {
 	}
 	desc := this.GetString("desc")
 
-	var dep Departs
+	var dep users.Departs
 	dep.Id = utils.SnowFlakeId()
 	dep.Name = name
 	dep.Desc = desc
-	err := AddDeparts(dep)
+	err := users.AddDeparts(dep)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "部门添加成功"}
@@ -140,7 +140,7 @@ func (this *EditDepartmentController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	dep, err := GetDeparts(int64(id))
+	dep, err := users.GetDeparts(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -161,7 +161,7 @@ func (this *EditDepartmentController) Post() {
 		this.ServeJSON()
 		return
 	}
-	_, err := GetDeparts(id)
+	_, err := users.GetDeparts(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "部门不存在"}
 		this.ServeJSON()
@@ -176,11 +176,11 @@ func (this *EditDepartmentController) Post() {
 	}
 	desc := this.GetString("desc")
 
-	var dep Departs
+	var dep users.Departs
 	dep.Name = name
 	dep.Desc = desc
 
-	err = UpdateDeparts(id, dep)
+	err = users.UpdateDeparts(id, dep)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "信息修改成功", "id": fmt.Sprintf("%d", id)}

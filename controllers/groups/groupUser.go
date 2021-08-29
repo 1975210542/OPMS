@@ -2,9 +2,10 @@ package groups
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/groups"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/groups"
+	"github.com/1975210542/OPMS/utils"
+
 	"strconv"
 	"strings"
 	//"time"
@@ -27,10 +28,10 @@ func (this *ManageGroupUserController) Get() {
 
 	groupid, _ := strconv.Atoi(idstr)
 
-	group, _ := GetGroup(int64(groupid))
+	group, _ := groups.GetGroup(int64(groupid))
 	this.Data["group"] = group
 
-	_, _, users := ListGroupsUserAndName(int64(groupid))
+	_, _, users := groups.ListGroupsUserAndName(int64(groupid))
 	fmt.Println(users)
 	this.Data["users"] = users
 
@@ -51,7 +52,7 @@ func (this *FormGroupUserController) Get() {
 
 	if "" != idstr {
 		id, _ := strconv.Atoi(idstr)
-		group, _ := GetGroup(int64(id))
+		group, _ := groups.GetGroup(int64(id))
 		this.Data["group"] = group
 	}
 	this.TplName = "groups/user-form.tpl"
@@ -77,12 +78,12 @@ func (this *FormGroupUserController) Post() {
 		return
 	}
 
-	var groupUser GroupsUser
+	var groupUser groups.GroupsUser
 	var err error
 	groupUser.Id = utils.SnowFlakeId()
 	groupUser.Groupid = groupid
 	groupUser.Userid = userid
-	err = AddGroupsUser(groupUser)
+	err =groups. AddGroupsUser(groupUser)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "操作成功", "id": fmt.Sprintf("%d", groupid)}
@@ -110,7 +111,7 @@ func (this *AjaxDeleteGroupUserController) Post() {
 		return
 	}
 
-	err := DeleteGroupsUser(id)
+	err := groups.DeleteGroupsUser(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

@@ -2,10 +2,11 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	. "opms/models/users"
-	"opms/utils"
+
+	"github.com/1975210542/OPMS/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/models/users"
 	"strconv"
 	"strings"
 )
@@ -23,7 +24,7 @@ func (this *TeamProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -34,7 +35,7 @@ func (this *TeamProjectController) Get() {
 		page = 1
 	}
 	offset := 500
-	_, _, teams := ListProjectTeam(idlong, page, offset)
+	_, _, teams := projects.ListProjectTeam(idlong, page, offset)
 	this.Data["teams"] = teams
 	this.Data["countTeam"] = len(teams)
 	this.TplName = "projects/team.tpl"
@@ -58,7 +59,7 @@ func (this *AjaxDeleteTeamProjectController) Post() {
 		return
 	}
 
-	err := DeleteProjectTeam(id)
+	err := projects.DeleteProjectTeam(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "成员删除成功"}
@@ -79,7 +80,7 @@ func (this *AddTeamProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	project, err := GetProject(int64(id))
+	project, err := projects.GetProject(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -106,14 +107,14 @@ func (this *AddTeamProjectController) Post() {
 		this.ServeJSON()
 		return
 	}
-	realname := GetRealname(userid)
+	realname := users.GetRealname(userid)
 	if "" == realname {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "成员不存在"}
 		this.ServeJSON()
 		return
 	}
 
-	checkteam, _ := GetProjectTeam(userid, projectid)
+	checkteam, _ := projects.GetProjectTeam(userid, projectid)
 	if checkteam.Userid > 0 {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "成员已经存在"}
 		this.ServeJSON()
@@ -124,12 +125,12 @@ func (this *AddTeamProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var team ProjectsTeam
+	var team projects.ProjectsTeam
 	team.Id = id
 	team.Userid = userid
 	team.Projectid = projectid
 
-	err = AddTeam(team)
+	err = projects.AddTeam(team)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "项目成员添加成功", "id": fmt.Sprintf("%d", id)}

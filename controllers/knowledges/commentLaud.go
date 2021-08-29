@@ -2,10 +2,11 @@ package knowledges
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/knowledges"
-	. "opms/models/messages"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/knowledges"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/utils"
+
 )
 
 type AddCommentController struct {
@@ -27,18 +28,18 @@ func (this *AddCommentController) Post() {
 	}
 
 	var err error
-	var comment KnowledgesComment
+	var comment knowledges.KnowledgesComment
 	comment.Id = utils.SnowFlakeId()
 	comment.Userid = this.BaseController.UserUserId
 	comment.Knowid = knowid
 	comment.Content = content
 
-	err = AddKnowledgeComment(comment)
+	err = knowledges.AddKnowledgeComment(comment)
 
 	if err == nil {
 		//消息通知
-		knowledge, _ := GetKnowledge(knowid)
-		var msg Messages
+		knowledge, _ := knowledges.GetKnowledge(knowid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = knowledge.Userid
@@ -46,7 +47,7 @@ func (this *AddCommentController) Post() {
 		msg.Subtype = 11
 		msg.Title = knowledge.Title
 		msg.Url = "/knowledge/" + fmt.Sprintf("%d", knowid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "评价添加成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "添加失败"}
@@ -66,24 +67,24 @@ func (this *AjaxLaudController) Post() {
 		return
 	}
 
-	laudexit, _ := GetKnowledgeLaud(knowid)
+	laudexit, _ := knowledges.GetKnowledgeLaud(knowid)
 	if laudexit.Userid == this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "已经点过赞"}
 		this.ServeJSON()
 	}
 
 	var err error
-	var laud KnowledgesLaud
+	var laud knowledges.KnowledgesLaud
 	laud.Id = utils.SnowFlakeId()
 	laud.Userid = this.BaseController.UserUserId
 	laud.Knowid = knowid
 
-	err = AddKnowledgeLaud(laud)
+	err = knowledges.AddKnowledgeLaud(laud)
 
 	if err == nil {
 		//消息通知
-		knowledge, _ := GetKnowledge(knowid)
-		var msg Messages
+		knowledge, _ := knowledges.GetKnowledge(knowid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = knowledge.Userid
@@ -91,7 +92,7 @@ func (this *AjaxLaudController) Post() {
 		msg.Subtype = 21
 		msg.Title = knowledge.Title
 		msg.Url = "/knowledge/" + fmt.Sprintf("%d", knowid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "点赞成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "点赞失败"}

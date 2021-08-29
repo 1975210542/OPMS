@@ -2,9 +2,10 @@ package users
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/utils"
+
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/controllers"
 	"strconv"
 	"strings"
 
@@ -38,10 +39,10 @@ func (this *ManageNoticeController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countNotice := CountNotices(condArr)
+	countNotice := users.CountNotices(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countNotice)
-	_, _, notice := ListNotices(condArr, page, offset)
+	_, _, notice := users.ListNotices(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -76,7 +77,7 @@ func (this *AjaxStatusNoticeController) Post() {
 		return
 	}
 
-	err := ChangeNoticeStatus(id, status)
+	err := users.ChangeNoticeStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "公告状态更改成功"}
@@ -114,11 +115,11 @@ func (this *AddNoticeController) Post() {
 	}
 	content := this.GetString("content")
 
-	var not Notices
+	var not users.Notices
 	not.Id = utils.SnowFlakeId()
 	not.Title = title
 	not.Content = content
-	err := AddNotices(not)
+	err := users.AddNotices(not)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "公告添加成功"}
@@ -140,7 +141,7 @@ func (this *EditNoticeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	notice, err := GetNotices(int64(id))
+	notice, err := users.GetNotices(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -161,7 +162,7 @@ func (this *EditNoticeController) Post() {
 		this.ServeJSON()
 		return
 	}
-	_, err := GetNotices(id)
+	_, err := users.GetNotices(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "公告不存在"}
 		this.ServeJSON()
@@ -176,11 +177,11 @@ func (this *EditNoticeController) Post() {
 	}
 	content := this.GetString("content")
 
-	var not Notices
+	var not users.Notices
 	not.Title = title
 	not.Content = content
 
-	err = UpdateNotices(id, not)
+	err = users.UpdateNotices(id, not)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "信息修改成功", "id": fmt.Sprintf("%d", id)}
@@ -208,7 +209,7 @@ func (this *AjaxDeleteNoticeController) Post() {
 		return
 	}
 
-	err := DeleteNotice(id)
+	err := users.DeleteNotice(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

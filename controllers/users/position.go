@@ -2,9 +2,10 @@ package users
 
 import (
 	//"fmt"
-	"opms/controllers"
-	. "opms/models/users"
-	"opms/utils"
+
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"strconv"
 	"strings"
 
@@ -37,10 +38,10 @@ func (this *ManagePositionController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countPosition := CountPositions(condArr)
+	countPosition := users.CountPositions(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countPosition)
-	_, _, position := ListPositions(condArr, page, offset)
+	_, _, position := users.ListPositions(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -75,7 +76,7 @@ func (this *AjaxStatusPositionController) Post() {
 		return
 	}
 
-	err := ChangePositionStatus(id, status)
+	err := users.ChangePositionStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "职称状态更改成功"}
@@ -113,11 +114,11 @@ func (this *AddPositionController) Post() {
 	}
 	desc := this.GetString("desc")
 
-	var pos Positions
+	var pos users.Positions
 	pos.Id = utils.SnowFlakeId()
 	pos.Name = name
 	pos.Desc = desc
-	err := AddPositions(pos)
+	err := users.AddPositions(pos)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "职称添加成功"}
@@ -139,7 +140,7 @@ func (this *EditPositionController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	pos, err := GetPositions(int64(id))
+	pos, err := users.GetPositions(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -160,7 +161,7 @@ func (this *EditPositionController) Post() {
 		this.ServeJSON()
 		return
 	}
-	_, err := GetPositions(id)
+	_, err := users.GetPositions(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "职称不存在"}
 		this.ServeJSON()
@@ -175,11 +176,11 @@ func (this *EditPositionController) Post() {
 	}
 	desc := this.GetString("desc")
 
-	var pos Positions
+	var pos users.Positions
 	pos.Name = name
 	pos.Desc = desc
 
-	err = UpdatePositions(id, pos)
+	err = users.UpdatePositions(id, pos)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "信息修改成功"}

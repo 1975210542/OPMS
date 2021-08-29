@@ -2,9 +2,10 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	//. "opms/models/projects"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -19,7 +20,7 @@ type MyProjectController struct {
 
 func (this *MyProjectController) Get() {
 	userid := this.BaseController.UserUserId
-	_, _, projects := ListMyProject(userid, 1, 100)
+	_, _, projects := projects.ListMyProject(userid, 1, 100)
 	this.Data["projects"] = projects
 	this.Data["countProject"] = len(projects)
 
@@ -53,9 +54,9 @@ func (this *ManageProjectController) Get() {
 	condArr["status"] = status
 	condArr["keywords"] = keywords
 
-	countProject := CountProject(condArr)
+	countProject := projects.CountProject(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countProject)
-	_, _, projects := ListProject(condArr, page, offset)
+	_, _, projects := projects.ListProject(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -89,7 +90,7 @@ func (this *AjaxStatusProjectController) Post() {
 		return
 	}
 
-	err := ChangeProjectStatus(id, status)
+	err := projects.ChangeProjectStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "项目状态更改成功"}
@@ -108,7 +109,7 @@ func (this *AddProjectController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "project-add") {
 		this.Abort("401")
 	}
-	var project Projects
+	var project projects.Projects
 	project.Started = time.Now().Unix()
 	project.Ended = time.Now().Unix()
 	this.Data["project"] = project
@@ -163,7 +164,7 @@ func (this *AddProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var pro Projects
+	var pro projects.Projects
 	pro.Id = id
 	pro.Userid = userid
 	pro.Name = name
@@ -172,7 +173,7 @@ func (this *AddProjectController) Post() {
 	pro.Ended = endedtime
 	pro.Desc = desc
 
-	err = AddProject(pro)
+	err = projects.AddProject(pro)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "项目信息添加成功", "id": fmt.Sprintf("%d", id)}
@@ -193,11 +194,11 @@ func (this *EditProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	project, err := GetProject(int64(id))
+	project, err := projects.GetProject(int64(id))
 	if err != nil {
 		this.Redirect("/404.html", 302)
 	}
-	_, _, teams := ListProjectTeam(project.Id, 1, 100)
+	_, _, teams := projects.ListProjectTeam(project.Id, 1, 100)
 	this.Data["teams"] = teams
 	this.Data["project"] = project
 	this.TplName = "projects/project-form.tpl"
@@ -216,7 +217,7 @@ func (this *EditProjectController) Post() {
 		this.ServeJSON()
 		return
 	}
-	_, err := GetProject(id)
+	_, err := projects.GetProject(id)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "项目不存在"}
 		this.ServeJSON()
@@ -261,7 +262,7 @@ func (this *EditProjectController) Post() {
 	testuserid, _ := this.GetInt64("testuserid")
 	publuserid, _ := this.GetInt64("publuserid")
 
-	var pro Projects
+	var pro projects.Projects
 	pro.Name = name
 	pro.Aliasname = aliasname
 	pro.Started = startedtime
@@ -272,7 +273,7 @@ func (this *EditProjectController) Post() {
 	pro.Testuserid = testuserid
 	pro.Publuserid = publuserid
 
-	err = UpdateProject(id, pro)
+	err = projects.UpdateProject(id, pro)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "项目修改成功"}
@@ -290,7 +291,7 @@ type ShowProjectController struct {
 func (this *ShowProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	project, err := GetProject(int64(id))
+	project, err := projects.GetProject(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
@@ -317,56 +318,56 @@ func (this *ChartProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	longid := int64(id)
-	project, err := GetProject(longid)
+	project, err := projects.GetProject(longid)
 	if err != nil {
 		this.Redirect("/404.html", 302)
 	}
 
 	//团队
-	chartTeamsNum, _, chartTeams := ChartProjectTeam(longid)
+	chartTeamsNum, _, chartTeams := projects.ChartProjectTeam(longid)
 	this.Data["chartTeams"] = chartTeams
 	this.Data["chartTeamsNum"] = chartTeamsNum - 1
 
 	//需求
-	chartNeedsAcceptNum, _, chartNeedsAccept := ChartProjectNeed("accept", longid)
+	chartNeedsAcceptNum, _, chartNeedsAccept := projects.ChartProjectNeed("accept", longid)
 	this.Data["chartNeedsAccept"] = chartNeedsAccept
 	this.Data["chartNeedsAcceptNum"] = chartNeedsAcceptNum - 1
 
-	chartNeedsUserNum, _, chartNeedsUser := ChartProjectNeed("user", longid)
+	chartNeedsUserNum, _, chartNeedsUser :=projects.ChartProjectNeed("user", longid)
 	this.Data["chartNeedsUser"] = chartNeedsUser
 	this.Data["chartNeedsUserNum"] = chartNeedsUserNum - 1
 
-	chartNeedsSourceNum, _, chartNeedsSource := ChartProjectNeedSource(longid)
+	chartNeedsSourceNum, _, chartNeedsSource := projects.ChartProjectNeedSource(longid)
 	this.Data["chartNeedsSource"] = chartNeedsSource
 	this.Data["chartNeedsSourceNum"] = chartNeedsSourceNum - 1
 
 	//任务
-	chartTasksAcceptNum, _, chartTasksAccept := ChartProjectTask("accept", longid)
+	chartTasksAcceptNum, _, chartTasksAccept := projects.ChartProjectTask("accept", longid)
 	this.Data["chartTasksAccept"] = chartTasksAccept
 	this.Data["chartTasksAcceptNum"] = chartTasksAcceptNum - 1
 
-	chartTasksUserNum, _, chartTasksUser := ChartProjectTask("user", longid)
+	chartTasksUserNum, _, chartTasksUser := projects.ChartProjectTask("user", longid)
 	this.Data["chartTasksUser"] = chartTasksUser
 	this.Data["chartTasksUserNum"] = chartTasksUserNum - 1
 
-	chartTasksCompleteNum, _, chartTasksComplete := ChartProjectTask("complete", longid)
+	chartTasksCompleteNum, _, chartTasksComplete := projects.ChartProjectTask("complete", longid)
 	this.Data["chartTasksComplete"] = chartTasksComplete
 	this.Data["chartTasksCompleteNum"] = chartTasksCompleteNum - 1
 
-	chartTasksSourceNum, _, chartTasksSource := ChartProjectTaskSource(longid)
+	chartTasksSourceNum, _, chartTasksSource := projects.ChartProjectTaskSource(longid)
 	this.Data["chartTasksSource"] = chartTasksSource
 	this.Data["chartTasksSourceNum"] = chartTasksSourceNum - 1
 
 	//Bug
-	chartTestsAcceptNum, _, chartTestsAccept := ChartProjectTest("accept", longid)
+	chartTestsAcceptNum, _, chartTestsAccept := projects.ChartProjectTest("accept", longid)
 	this.Data["chartTestsAccept"] = chartTestsAccept
 	this.Data["chartTestsAcceptNum"] = chartTestsAcceptNum - 1
 
-	chartTestsUserNum, _, chartTestsUser := ChartProjectTest("user", longid)
+	chartTestsUserNum, _, chartTestsUser := projects.ChartProjectTest("user", longid)
 	this.Data["chartTestsUser"] = chartTestsUser
 	this.Data["chartTestsUserNum"] = chartTestsUserNum - 1
 
-	chartTestsCompleteNum, _, chartTestsComplete := ChartProjectTest("complete", longid)
+	chartTestsCompleteNum, _, chartTestsComplete := projects.ChartProjectTest("complete", longid)
 	this.Data["chartTestsComplete"] = chartTestsComplete
 	this.Data["chartTestsCompleteNum"] = chartTestsCompleteNum - 1
 

@@ -2,11 +2,11 @@ package oagoods
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/messages"
-	. "opms/models/oagoods"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/oagoods"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -44,10 +44,10 @@ func (this *ManageOagoodController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countOagood := CountOagood(condArr)
+	countOagood := oagoods.CountOagood(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countOagood)
-	_, _, oagoods := ListOagood(condArr, page, offset)
+	_, _, oagoods := oagoods.ListOagood(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -89,10 +89,10 @@ func (this *ApprovalOagoodController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countOagood := CountOagoodApproval(condArr)
+	countOagood := oagoods.CountOagoodApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countOagood)
-	_, _, oagoods := ListOagoodApproval(condArr, page, offset)
+	_, _, oagoods := oagoods.ListOagoodApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -113,19 +113,19 @@ func (this *ShowOagoodController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	oagood, err := GetOagood(int64(id))
+	oagood, err := oagoods.GetOagood(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["oagood"] = oagood
-	_, _, approvers := ListOagoodApproverProcess(oagood.Id)
+	_, _, approvers := oagoods.ListOagoodApproverProcess(oagood.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != oagood.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckOagoodApprover(oagood.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := oagoods.CheckOagoodApprover(oagood.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -188,16 +188,16 @@ func (this *ShowOagoodController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var oagood OagoodsApprover
+	var oagood oagoods.OagoodsApprover
 	oagood.Status = status
 	oagood.Summary = summary
 	oagood.Oagoodid = oagoodid
-	err := UpdateOagoodsApprover(approverid, oagood)
+	err := oagoods.UpdateOagoodsApprover(approverid, oagood)
 
 	if err == nil {
 		//消息通知
-		og, _ := GetOagood(oagoodid)
-		var msg Messages
+		og, _ := oagoods.GetOagood(oagoodid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = og.Userid
@@ -209,7 +209,7 @@ func (this *ShowOagoodController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/oagood/approval/" + fmt.Sprintf("%d", oagoodid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -226,10 +226,10 @@ func (this *AddOagoodController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "oagood-add") {
 		this.Abort("401")
 	}
-	var oagood Oagoods
+	var oagood oagoods.Oagoods
 	this.Data["oagood"] = oagood
 
-	_, _, users := ListUserFind()
+	_, _, users := users.ListUserFind()
 	this.Data["users"] = users
 
 	this.TplName = "oagoods/form.tpl"
@@ -300,7 +300,7 @@ func (this *AddOagoodController) Post() {
 		}
 	}
 
-	var oagood Oagoods
+	var oagood oagoods.Oagoods
 	oagoodid := utils.SnowFlakeId()
 	oagood.Id = oagoodid
 	oagood.Userid = this.BaseController.UserUserId
@@ -311,11 +311,11 @@ func (this *AddOagoodController) Post() {
 	oagood.Picture = filepath
 	oagood.Approverids = approverids
 
-	err = AddOagood(oagood)
+	err = oagoods.AddOagood(oagood)
 
 	if err == nil {
 		//审批人入库
-		var oagoodApp OagoodsApprover
+		var oagoodApp oagoods.OagoodsApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -323,7 +323,7 @@ func (this *AddOagoodController) Post() {
 			oagoodApp.Id = id
 			oagoodApp.Userid = int64(userid)
 			oagoodApp.Oagoodid = oagoodid
-			AddOagoodsApprover(oagoodApp)
+			oagoods.AddOagoodsApprover(oagoodApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘我的物品领用单’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", oagoodid)}
@@ -344,7 +344,7 @@ func (this *EditOagoodController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	oagood, _ := GetOagood(int64(id))
+	oagood, _ := oagoods.GetOagood(int64(id))
 
 	if oagood.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -421,14 +421,14 @@ func (this *EditOagoodController) Post() {
 		}
 	}
 
-	var oagood Oagoods
+	var oagood oagoods.Oagoods
 	oagood.Purpose = purpose
 	oagood.Names = strings.Join(names, "||")
 	oagood.Quantitys = strings.Join(quantitys, "||")
 	oagood.Content = content
 	oagood.Picture = filepath
 
-	err = UpdateOagood(id, oagood)
+	err = oagoods.UpdateOagood(id, oagood)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "物品领用修改成功", "id": fmt.Sprintf("%d", id)}
@@ -453,7 +453,7 @@ func (this *AjaxOagoodDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	oagood, _ := GetOagood(int64(id))
+	oagood, _ := oagoods.GetOagood(int64(id))
 
 	if oagood.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -465,7 +465,7 @@ func (this *AjaxOagoodDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteOagood(id)
+	err := oagoods.DeleteOagood(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -490,7 +490,7 @@ func (this *AjaxOagoodStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	oagood, _ := GetOagood(int64(id))
+	oagood, _ := oagoods.GetOagood(int64(id))
 
 	if oagood.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -502,14 +502,14 @@ func (this *AjaxOagoodStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeOagoodStatus(id, 2)
+	err := oagoods.ChangeOagoodStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(oagood.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -517,7 +517,7 @@ func (this *AjaxOagoodStatusController) Post() {
 			msg.Subtype = 36
 			msg.Title = "去审批处理"
 			msg.Url = "/oagood/approval/" + fmt.Sprintf("%d", oagood.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

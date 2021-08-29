@@ -2,11 +2,11 @@ package goouts
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/goouts"
-	. "opms/models/messages"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/goouts"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -44,10 +44,10 @@ func (this *ManageGooutController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countGoout := CountGoout(condArr)
+	countGoout := goouts.CountGoout(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countGoout)
-	_, _, goouts := ListGoout(condArr, page, offset)
+	_, _, goouts := goouts.ListGoout(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -89,10 +89,10 @@ func (this *ApprovalGooutController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countGoout := CountGooutApproval(condArr)
+	countGoout := goouts.CountGooutApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countGoout)
-	_, _, goouts := ListGooutApproval(condArr, page, offset)
+	_, _, goouts := goouts.ListGooutApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -113,19 +113,19 @@ func (this *ShowGooutController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	goout, err := GetGoout(int64(id))
+	goout, err := goouts.GetGoout(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["goout"] = goout
-	_, _, approvers := ListGooutApproverProcess(goout.Id)
+	_, _, approvers := goouts.ListGooutApproverProcess(goout.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != goout.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckGooutApprover(goout.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := goouts.CheckGooutApprover(goout.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -187,16 +187,16 @@ func (this *ShowGooutController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var goout GooutsApprover
+	var goout goouts.GooutsApprover
 	goout.Status = status
 	goout.Summary = summary
 	goout.Gooutid = gooutid
-	err := UpdateGooutsApprover(approverid, goout)
+	err := goouts.UpdateGooutsApprover(approverid, goout)
 
 	if err == nil {
 		//消息通知
-		goout, _ := GetGoout(gooutid)
-		var msg Messages
+		goout, _ := goouts.GetGoout(gooutid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = goout.Userid
@@ -208,7 +208,7 @@ func (this *ShowGooutController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/goout/approval/" + fmt.Sprintf("%d", gooutid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -225,10 +225,10 @@ func (this *AddGooutController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "goout-add") {
 		this.Abort("401")
 	}
-	var goout Goouts
+	var goout goouts.Goouts
 	this.Data["goout"] = goout
 
-	_, _, users := ListUserFind()
+	_, _, users := users.ListUserFind()
 	this.Data["users"] = users
 
 	this.TplName = "goouts/form.tpl"
@@ -291,7 +291,7 @@ func (this *AddGooutController) Post() {
 		}
 	}
 
-	var goout Goouts
+	var goout goouts.Goouts
 	gooutid := utils.SnowFlakeId()
 	goout.Id = gooutid
 	goout.Userid = this.BaseController.UserUserId
@@ -302,11 +302,11 @@ func (this *AddGooutController) Post() {
 	goout.Picture = filepath
 	goout.Approverids = approverids
 
-	err = AddGoout(goout)
+	err = goouts.AddGoout(goout)
 
 	if err == nil {
 		//审批人入库
-		var gooutApp GooutsApprover
+		var gooutApp goouts.GooutsApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -314,7 +314,7 @@ func (this *AddGooutController) Post() {
 			gooutApp.Id = id
 			gooutApp.Userid = int64(userid)
 			gooutApp.Gooutid = gooutid
-			AddGooutsApprover(gooutApp)
+			goouts.AddGooutsApprover(gooutApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘我的外出单’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", gooutid)}
@@ -335,7 +335,7 @@ func (this *EditGooutController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	goout, _ := GetGoout(int64(id))
+	goout, _ := goouts.GetGoout(int64(id))
 
 	if goout.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -405,14 +405,14 @@ func (this *EditGooutController) Post() {
 		}
 	}
 
-	var goout Goouts
+	var goout goouts.Goouts
 	goout.Started = startedtime
 	goout.Ended = endedtime
 	goout.Hours = hours
 	goout.Reason = reason
 	goout.Picture = filepath
 
-	err = UpdateGoout(id, goout)
+	err = goouts.UpdateGoout(id, goout)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "外出修改成功", "id": fmt.Sprintf("%d", id)}
@@ -437,7 +437,7 @@ func (this *AjaxGooutDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	goout, _ := GetGoout(int64(id))
+	goout, _ := goouts.GetGoout(int64(id))
 
 	if goout.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -449,7 +449,7 @@ func (this *AjaxGooutDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteGoout(id)
+	err := goouts.DeleteGoout(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -474,7 +474,7 @@ func (this *AjaxGooutStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	goout, _ := GetGoout(int64(id))
+	goout, _ := goouts.GetGoout(int64(id))
 
 	if goout.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -486,14 +486,14 @@ func (this *AjaxGooutStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeGooutStatus(id, 2)
+	err := goouts.ChangeGooutStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(goout.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -501,7 +501,7 @@ func (this *AjaxGooutStatusController) Post() {
 			msg.Subtype = 35
 			msg.Title = "去审批处理"
 			msg.Url = "/goout/approval/" + fmt.Sprintf("%d", goout.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

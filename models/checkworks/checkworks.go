@@ -1,14 +1,9 @@
 package checkworks
 
 import (
-	//"fmt"
-	//"math/rand"
-	"opms/models"
-	//"opms/utils"
-	"time"
-
-	//"github.com/astaxie/beego"
+	"github.com/1975210542/OPMS/models"
 	"github.com/astaxie/beego/orm"
+	"time"
 )
 
 type Checkworks struct {

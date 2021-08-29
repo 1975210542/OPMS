@@ -2,9 +2,10 @@ package groups
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/groups"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/groups"
+	"github.com/1975210542/OPMS/utils"
+
 	"strconv"
 	"strings"
 
@@ -28,11 +29,11 @@ func (this *ManageGroupPermissionController) Get() {
 
 	groupid, _ := strconv.Atoi(idstr)
 
-	group, _ := GetGroup(int64(groupid))
+	group, _ := groups.GetGroup(int64(groupid))
 	this.Data["group"] = group
 
 	condArr := make(map[string]string)
-	_, _, permissions := ListPermission(condArr, 1, 1000)
+	_, _, permissions := groups.ListPermission(condArr, 1, 1000)
 
 	var pstring = ""
 	var cstring = ""
@@ -46,7 +47,7 @@ func (this *ManageGroupPermissionController) Get() {
 	this.Data["pstring"] = pstring
 	this.Data["cstring"] = cstring
 
-	groupspermissions := ListGroupsPermission(int64(groupid))
+	groupspermissions := groups.ListGroupsPermission(int64(groupid))
 	var groupstring = ""
 	for _, v := range groupspermissions {
 		groupstring += fmt.Sprintf("%d", v.Permissionid) + ","
@@ -79,20 +80,20 @@ func (this *ManageGroupPermissionController) Post() {
 	//fmt.Println("hello")
 	//fmt.Println(permission)
 
-	var groupPermission GroupsPermission
+	var groupPermission groups.GroupsPermission
 	var err error
 
 	groupPermission.Groupid = groupid
 
 	//先删除,再添加
-	DeleteGroupsPermissionForGroupid(groupid)
+	groups.DeleteGroupsPermissionForGroupid(groupid)
 
 	names := strings.Split(permission, ",")
 	for _, v := range names {
 		pid, _ := strconv.Atoi(v)
 		groupPermission.Id = utils.SnowFlakeId()
 		groupPermission.Permissionid = int64(pid)
-		err = AddGroupsPermission(groupPermission)
+		err = groups.AddGroupsPermission(groupPermission)
 	}
 
 	if err == nil {
@@ -121,7 +122,7 @@ func (this *AjaxDeleteGroupPermissionController) Post() {
 		return
 	}
 
-	err := DeleteGroupsPermission(id)
+	err := groups.DeleteGroupsPermission(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

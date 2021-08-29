@@ -2,9 +2,9 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -43,9 +43,9 @@ func (this *MyTestProjectController) Get() {
 	}
 	condArr["filter"] = filter
 
-	countTest := CountTest(condArr)
+	countTest := projects.CountTest(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countTest)
-	_, _, tests := ListProjectTest(condArr, page, offset)
+	_, _, tests := projects.ListProjectTest(condArr, page, offset)
 
 	this.Data["tests"] = tests
 	this.Data["paginator"] = paginator
@@ -53,7 +53,7 @@ func (this *MyTestProjectController) Get() {
 	this.Data["condArr"] = condArr
 	this.Data["countTest"] = countTest
 
-	_, _, teams := ListProjectTeam(0, 1, 100)
+	_, _, teams := projects.ListProjectTeam(0, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/mytest.tpl"
@@ -71,7 +71,7 @@ func (this *TestProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -114,9 +114,9 @@ func (this *TestProjectController) Get() {
 	}
 	condArr["filter"] = filter
 
-	countTest := CountTest(condArr)
+	countTest := projects.CountTest(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countTest)
-	_, _, tests := ListProjectTest(condArr, page, offset)
+	_, _, tests := projects.ListProjectTest(condArr, page, offset)
 
 	this.Data["tests"] = tests
 	this.Data["paginator"] = paginator
@@ -125,7 +125,7 @@ func (this *TestProjectController) Get() {
 	this.Data["countTest"] = countTest
 	this.Data["title"] = "项目测试"
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/test.tpl"
@@ -138,16 +138,16 @@ type ShowTestProjectController struct {
 func (this *ShowTestProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	test, _ := GetProjectTest(int64(id))
+	test, _ := projects.GetProjectTest(int64(id))
 	this.Data["test"] = test
 
-	project, _ := GetProject(test.Projectid)
+	project, _ := projects.GetProject(test.Projectid)
 	this.Data["project"] = project
 
-	need, _ := GetProjectNeeds(test.Needsid)
+	need, _ := projects.GetProjectNeeds(test.Needsid)
 	this.Data["need"] = need
 
-	log := ListProjectTestLog(test.Id)
+	log := projects.ListProjectTestLog(test.Id)
 	this.Data["log"] = log
 	this.TplName = "projects/test-detail.tpl"
 }
@@ -177,7 +177,7 @@ func (this *AjaxStatusTestController) Post() {
 	}
 
 	note := this.GetString("note")
-	err := ChangeProjectTestStatus(id, this.BaseController.UserUserId, status, note)
+	err := projects.ChangeProjectTestStatus(id, this.BaseController.UserUserId, status, note)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "解决方案更改成功"}
@@ -207,7 +207,7 @@ func (this *AjaxAcceptTestController) Post() {
 	acceptid, _ := this.GetInt64("acceptid")
 	note := this.GetString("note")
 
-	err := ChangeProjectTestAccept(id, acceptid, this.BaseController.UserUserId, note)
+	err := projects.ChangeProjectTestAccept(id, acceptid, this.BaseController.UserUserId, note)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "指派成功"}
@@ -229,23 +229,23 @@ func (this *AddTestProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["project"] = project
 
-	var test ProjectsTest
+	var test projects.ProjectsTest
 	test.Level = 0
 	this.Data["test"] = test
 
-	needs := ListNeedsForForm(idlong, 1, 100)
+	needs := projects.ListNeedsForForm(idlong, 1, 100)
 	this.Data["needs"] = needs
 
-	tasks := ListTaskForForm(idlong, 1, 100)
+	tasks := projects.ListTaskForForm(idlong, 1, 100)
 	this.Data["tasks"] = tasks
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/test-form.tpl"
@@ -316,7 +316,7 @@ func (this *AddTestProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var test ProjectsTest
+	var test projects.ProjectsTest
 	test.Id = id
 	test.Taskid = taskid
 	test.Needsid = needsid
@@ -331,7 +331,7 @@ func (this *AddTestProjectController) Post() {
 	test.Browser = browser
 	test.Attachment = filepath
 
-	err = AddTest(test)
+	err = projects.AddTest(test)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "测试添加成功", "id": fmt.Sprintf("%d", id)}
@@ -352,9 +352,9 @@ func (this *EditTestProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	test, _ := GetProjectTest(int64(id))
+	test, _ := projects.GetProjectTest(int64(id))
 
-	project, err := GetProject(test.Projectid)
+	project, err := projects.GetProject(test.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -369,13 +369,13 @@ func (this *EditTestProjectController) Get() {
 	}
 	this.Data["ccids"] = ccidsmap
 
-	needs := ListNeedsForForm(test.Projectid, 1, 100)
+	needs := projects.ListNeedsForForm(test.Projectid, 1, 100)
 	this.Data["needs"] = needs
 
-	tasks := ListTaskForForm(test.Projectid, 1, 100)
+	tasks := projects.ListTaskForForm(test.Projectid, 1, 100)
 	this.Data["tasks"] = tasks
 
-	_, _, teams := ListProjectTeam(test.Projectid, 1, 100)
+	_, _, teams := projects.ListProjectTeam(test.Projectid, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/test-form.tpl"
@@ -436,7 +436,7 @@ func (this *EditTestProjectController) Post() {
 		}
 	}
 
-	var test ProjectsTest
+	var test projects.ProjectsTest
 	test.Taskid = taskid
 	test.Needsid = needsid
 	test.Acceptid = acceptid
@@ -449,7 +449,7 @@ func (this *EditTestProjectController) Post() {
 	test.Attachment = filepath
 	test.Userid = this.BaseController.UserUserId
 
-	err = UpdateTest(testid, test)
+	err = projects.UpdateTest(testid, test)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "测试编辑成功"}
@@ -477,7 +477,7 @@ func (this *DeleteTestProjectController) Post() {
 		return
 	}
 
-	err := DeleteProjectTest(testid)
+	err := projects.DeleteProjectTest(testid)
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除Bug成功"}
 	} else {

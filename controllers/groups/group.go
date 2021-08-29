@@ -2,9 +2,9 @@ package groups
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/groups"
-	"opms/utils"
+	"github.com/1975210542/OPMS/models/groups"
+	"github.com/1975210542/OPMS/utils"
+	"github.com/1975210542/OPMS/controllers"
 	"strconv"
 	"strings"
 	//"time"
@@ -37,10 +37,10 @@ func (this *ManageGroupController) Get() {
 	condArr := make(map[string]string)
 	condArr["keywords"] = keywords
 
-	countGroup := CountGroup(condArr)
+	countGroup := groups.CountGroup(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countGroup)
-	_, _, groups := ListGroup(condArr, page, offset)
+	_, _, groups := groups.ListGroup(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -63,7 +63,7 @@ func (this *FormGroupController) Get() {
 			this.Abort("401")
 		}
 		id, _ := strconv.Atoi(idstr)
-		group, _ := GetGroup(int64(id))
+		group, _ := groups.GetGroup(int64(id))
 		this.Data["group"] = group
 	} else {
 		//权限检测
@@ -85,7 +85,7 @@ func (this *FormGroupController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var group Groups
+	var group groups.Groups
 	group.Name = name
 	group.Summary = summary
 
@@ -94,9 +94,9 @@ func (this *FormGroupController) Post() {
 	if groupid <= 0 {
 		groupid = utils.SnowFlakeId()
 		group.Id = groupid
-		err = AddGroup(group)
+		err = groups.AddGroup(group)
 	} else {
-		err = UpdateGroup(groupid, group)
+		err = groups.UpdateGroup(groupid, group)
 	}
 
 	if err == nil {
@@ -125,7 +125,7 @@ func (this *AjaxDeleteGroupController) Post() {
 		return
 	}
 
-	err := DeleteGroup(ids)
+	err := groups.DeleteGroup(ids)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

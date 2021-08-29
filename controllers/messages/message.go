@@ -2,8 +2,9 @@ package messages
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/messages"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/messages"
+
 	//"opms/utils"
 	//"strconv"
 	"strings"
@@ -40,18 +41,18 @@ func (this *ManageMessageController) Get() {
 	condArr["view"] = status
 	condArr["type"] = mtype
 
-	countMessage := CountMessages(condArr)
+	countMessage := messages.CountMessages(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countMessage)
-	_, _, messages := ListMessages(condArr, page, offset)
+	_, _, mgs := messages.ListMessages(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
-	this.Data["messages"] = messages
+	this.Data["messages"] = mgs
 	this.Data["countMessage"] = countMessage
 
 	//查看列表即更新查看状态标为已查看
-	ChangeMessagesStatusAll(this.BaseController.UserUserId)
+	messages.ChangeMessagesStatusAll(this.BaseController.UserUserId)
 
 	this.TplName = "messages/index.tpl"
 }
@@ -74,7 +75,7 @@ func (this *AjaxStatusMessageController) Post() {
 		return
 	}
 
-	err := ChangeMessagesStatus(id, 2)
+	err := messages.ChangeMessagesStatus(id, 2)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态更改成功"}
@@ -102,7 +103,7 @@ func (this *AjaxDeleteMessageController) Post() {
 		return
 	}
 
-	err := DeleteMessages(ids)
+	err := messages.DeleteMessages(ids)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

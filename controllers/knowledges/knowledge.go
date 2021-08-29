@@ -2,9 +2,10 @@ package knowledges
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/knowledges"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/knowledges"
+	"github.com/1975210542/OPMS/utils"
+
 	"strconv"
 	"strings"
 
@@ -46,17 +47,17 @@ func (this *ManageKnowledgeController) Get() {
 		condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 	}
 
-	countKnowledge := CountKnowledge(condArr)
+	countKnowledge := knowledges.CountKnowledge(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countKnowledge)
-	_, _, knowledges := ListKnowledge(condArr, page, offset)
+	_, _, knows := knowledges.ListKnowledge(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
-	this.Data["knowledges"] = knowledges
+	this.Data["knowledges"] = knows
 	this.Data["countKnowledge"] = countKnowledge
 
-	_, _, sorts := ListKnowledgeSort()
+	_, _, sorts := knowledges.ListKnowledgeSort()
 	this.Data["sorts"] = sorts
 	this.Data["title"] = "知识分享"
 	this.TplName = "knowledges/index.tpl"
@@ -73,14 +74,14 @@ func (this *ShowKnowledgeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	knowledge, err := GetKnowledge(int64(id))
+	knowledge, err := knowledges.GetKnowledge(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["knowledge"] = knowledge
-	ChangeRelationNum(knowledge.Id, "view")
+	knowledges.ChangeRelationNum(knowledge.Id, "view")
 
-	comments := ListKnowledgeComment(knowledge.Id, 1, 100)
+	comments := knowledges.ListKnowledgeComment(knowledge.Id, 1, 100)
 	this.Data["comments"] = comments
 
 	this.TplName = "knowledges/detail.tpl"
@@ -95,10 +96,10 @@ func (this *AddKnowledgeController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "knowledge-add") {
 		this.Abort("401")
 	}
-	var knowledge Knowledges
+	var knowledge knowledges.Knowledges
 	knowledge.Id = 1
 	this.Data["knowledge"] = knowledge
-	_, _, sorts := ListKnowledgeSort()
+	_, _, sorts := knowledges.ListKnowledgeSort()
 	this.Data["sorts"] = sorts
 
 	this.TplName = "knowledges/form.tpl"
@@ -133,7 +134,7 @@ func (this *AddKnowledgeController) Post() {
 	url := this.GetString("url")
 
 	var err error
-	var knowledge Knowledges
+	var knowledge knowledges.Knowledges
 	id := utils.SnowFlakeId()
 	knowledge.Id = id
 	knowledge.Userid = this.BaseController.UserUserId
@@ -144,7 +145,7 @@ func (this *AddKnowledgeController) Post() {
 	knowledge.Content = content
 	knowledge.Url = url
 
-	err = AddKnowledge(knowledge)
+	err = knowledges.AddKnowledge(knowledge)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "知识分享添加成功", "id": fmt.Sprintf("%d", id)}
@@ -165,7 +166,7 @@ func (this *EditKnowledgeController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	knowledge, _ := GetKnowledge(int64(id))
+	knowledge, _ := knowledges.GetKnowledge(int64(id))
 
 	if knowledge.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -173,7 +174,7 @@ func (this *EditKnowledgeController) Get() {
 
 	this.Data["knowledge"] = knowledge
 
-	_, _, sorts := ListKnowledgeSort()
+	_, _, sorts := knowledges.ListKnowledgeSort()
 	this.Data["sorts"] = sorts
 
 	this.TplName = "knowledges/form.tpl"
@@ -209,7 +210,7 @@ func (this *EditKnowledgeController) Post() {
 	url := this.GetString("url")
 
 	var err error
-	var knowledge Knowledges
+	var knowledge knowledges.Knowledges
 	knowledge.Sortid = sortid
 	knowledge.Title = title
 	knowledge.Tag = tag
@@ -217,7 +218,7 @@ func (this *EditKnowledgeController) Post() {
 	knowledge.Content = content
 	knowledge.Url = url
 
-	err = UpdateKnowledge(id, knowledge)
+	err = knowledges.UpdateKnowledge(id, knowledge)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "知识分享修改成功", "id": fmt.Sprintf("%d", id)}
@@ -245,7 +246,7 @@ func (this *AjaxDeleteKnowledgeController) Post() {
 		return
 	}
 
-	err := DeleteKnowledge(id, this.BaseController.UserUserId)
+	err := knowledges.DeleteKnowledge(id, this.BaseController.UserUserId)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

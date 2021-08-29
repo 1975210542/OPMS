@@ -2,11 +2,11 @@ package businesstrips
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/businesstrips"
-	. "opms/models/messages"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/businesstrips"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/users"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -44,10 +44,10 @@ func (this *ManageBusinesstripController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countBusinesstrip := CountBusinesstrip(condArr)
+	countBusinesstrip := businesstrips.CountBusinesstrip(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countBusinesstrip)
-	_, _, businesstrips := ListBusinesstrip(condArr, page, offset)
+	_, _, businesstrips := businesstrips.ListBusinesstrip(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -89,10 +89,10 @@ func (this *ApprovalBusinesstripController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countBusinesstrip := CountBusinesstripApproval(condArr)
+	countBusinesstrip := businesstrips.CountBusinesstripApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countBusinesstrip)
-	_, _, businesstrips := ListBusinesstripApproval(condArr, page, offset)
+	_, _, businesstrips := businesstrips.ListBusinesstripApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -112,19 +112,19 @@ func (this *ShowBusinesstripController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	businesstrip, err := GetBusinesstrip(int64(id))
+	businesstrip, err := businesstrips.GetBusinesstrip(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["businesstrip"] = businesstrip
-	_, _, approvers := ListBusinesstripApproverProcess(businesstrip.Id)
+	_, _, approvers := businesstrips.ListBusinesstripApproverProcess(businesstrip.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != businesstrip.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckBusinesstripApprover(businesstrip.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := businesstrips.CheckBusinesstripApprover(businesstrip.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -187,16 +187,16 @@ func (this *ShowBusinesstripController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var businesstrip BusinesstripsApprover
+	var businesstrip businesstrips.BusinesstripsApprover
 	businesstrip.Status = status
 	businesstrip.Summary = summary
 	businesstrip.Businesstripid = businesstripid
-	err := UpdateBusinesstripsApprover(approverid, businesstrip)
+	err := businesstrips.UpdateBusinesstripsApprover(approverid, businesstrip)
 
 	if err == nil {
 		//消息通知
-		bs, _ := GetBusinesstrip(businesstripid)
-		var msg Messages
+		bs, _ := businesstrips.GetBusinesstrip(businesstripid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = bs.Userid
@@ -208,7 +208,7 @@ func (this *ShowBusinesstripController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/businesstrip/approval/" + fmt.Sprintf("%d", businesstripid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -225,10 +225,10 @@ func (this *AddBusinesstripController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "businesstrip-add") {
 		this.Abort("401")
 	}
-	var businesstrip Businesstrips
+	var businesstrip businesstrips.Businesstrips
 	this.Data["businesstrip"] = businesstrip
 
-	_, _, users := ListUserFind()
+	_, _, users := users.ListUserFind()
 	this.Data["users"] = users
 
 	this.TplName = "businesstrips/form.tpl"
@@ -310,7 +310,7 @@ func (this *AddBusinesstripController) Post() {
 		}
 	}
 
-	var businesstrip Businesstrips
+	var businesstrip businesstrips.Businesstrips
 	businesstripid := utils.SnowFlakeId()
 	businesstrip.Id = businesstripid
 	businesstrip.Userid = this.BaseController.UserUserId
@@ -322,11 +322,11 @@ func (this *AddBusinesstripController) Post() {
 	businesstrip.Picture = filepath
 	businesstrip.Approverids = approverids
 
-	err = AddBusinesstrip(businesstrip)
+	err = businesstrips.AddBusinesstrip(businesstrip)
 
 	if err == nil {
 		//审批人入库
-		var businesstripApp BusinesstripsApprover
+		var businesstripApp businesstrips.BusinesstripsApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -334,7 +334,7 @@ func (this *AddBusinesstripController) Post() {
 			businesstripApp.Id = id
 			businesstripApp.Userid = int64(userid)
 			businesstripApp.Businesstripid = businesstripid
-			AddBusinesstripsApprover(businesstripApp)
+			businesstrips.AddBusinesstripsApprover(businesstripApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘我的出差’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", businesstripid)}
@@ -355,7 +355,7 @@ func (this *EditBusinesstripController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	businesstrip, _ := GetBusinesstrip(int64(id))
+	businesstrip, _ := businesstrips.GetBusinesstrip(int64(id))
 
 	if businesstrip.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -443,7 +443,7 @@ func (this *EditBusinesstripController) Post() {
 		}
 	}
 
-	var businesstrip Businesstrips
+	var businesstrip businesstrips.Businesstrips
 	businesstrip.Destinations = strings.Join(destinations, "||")
 	businesstrip.Starteds = strings.Join(starteds, "||")
 	businesstrip.Endeds = strings.Join(endeds, "||")
@@ -451,7 +451,7 @@ func (this *EditBusinesstripController) Post() {
 	businesstrip.Reason = reason
 	businesstrip.Picture = filepath
 
-	err = UpdateBusinesstrip(id, businesstrip)
+	err = businesstrips.UpdateBusinesstrip(id, businesstrip)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "报销修改成功", "id": fmt.Sprintf("%d", id)}
@@ -476,7 +476,7 @@ func (this *AjaxBusinesstripDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	businesstrip, _ := GetBusinesstrip(int64(id))
+	businesstrip, _ := businesstrips.GetBusinesstrip(int64(id))
 
 	if businesstrip.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -488,7 +488,7 @@ func (this *AjaxBusinesstripDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteBusinesstrip(id)
+	err := businesstrips.DeleteBusinesstrip(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -513,7 +513,7 @@ func (this *AjaxBusinesstripStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	businesstrip, _ := GetBusinesstrip(int64(id))
+	businesstrip, _ := businesstrips.GetBusinesstrip(int64(id))
 
 	if businesstrip.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -525,14 +525,14 @@ func (this *AjaxBusinesstripStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeBusinesstripStatus(id, 2)
+	err := businesstrips.ChangeBusinesstripStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(businesstrip.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -540,7 +540,7 @@ func (this *AjaxBusinesstripStatusController) Post() {
 			msg.Subtype = 34
 			msg.Title = "去审批处理"
 			msg.Url = "/businesstrip/approval/" + fmt.Sprintf("%d", businesstrip.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

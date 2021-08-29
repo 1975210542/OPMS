@@ -2,9 +2,9 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -42,9 +42,9 @@ func (this *MyNeedProjectController) Get() {
 	}
 	condArr["filter"] = filter
 
-	countNeeds := CountNeeds(condArr)
+	countNeeds := projects.CountNeeds(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countNeeds)
-	_, _, needs := ListProjectNeeds(condArr, page, offset)
+	_, _, needs := projects.ListProjectNeeds(condArr, page, offset)
 
 	this.Data["needs"] = needs
 	this.Data["paginator"] = paginator
@@ -52,7 +52,7 @@ func (this *MyNeedProjectController) Get() {
 	this.Data["condArr"] = condArr
 	this.Data["countNeeds"] = countNeeds
 
-	_, _, teams := ListProjectTeam(0, 1, 100)
+	_, _, teams := projects.ListProjectTeam(0, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/myneeds.tpl"
@@ -70,7 +70,7 @@ func (this *NeedsProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -102,17 +102,17 @@ func (this *NeedsProjectController) Get() {
 	acceptids = int64(acceptidtmp)
 	this.Data["acceptid"] = acceptids
 
-	countNeeds := CountNeeds(condArr)
+	countNeeds := projects.CountNeeds(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countNeeds)
-	_, _, needs := ListProjectNeeds(condArr, page, offset)
+	_, _, needs := projects.ListProjectNeeds(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
 	this.Data["needs"] = needs
 	this.Data["countNeeds"] = countNeeds
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/needs.tpl"
@@ -125,9 +125,9 @@ type ShowNeedsProjectController struct {
 func (this *ShowNeedsProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	needs, _ := GetProjectNeeds(int64(id))
+	needs, _ := projects.GetProjectNeeds(int64(id))
 
-	project, err := GetProject(needs.Projectid)
+	project, err := projects.GetProject(needs.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -160,7 +160,7 @@ func (this *AjaxStatusNeedProjectController) Post() {
 		return
 	}
 
-	err := ChangeProjectNeedsStatus(id, status)
+	err := projects.ChangeProjectNeedsStatus(id, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态更改成功"}
@@ -181,18 +181,18 @@ func (this *AddNeedsProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	project, err := GetProject(int64(id))
+	project, err := projects.GetProject(int64(id))
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["project"] = project
 
-	var needs ProjectsNeeds
+	var needs projects.ProjectsNeeds
 	needs.Source = 0
 	needs.Level = 0
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(project.Id, 1, 100)
+	_, _, teams := projects.ListProjectTeam(project.Id, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/needs-form.tpl"
@@ -260,7 +260,7 @@ func (this *AddNeedsProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var needs ProjectsNeeds
+	var needs projects.ProjectsNeeds
 	needs.Id = id
 	needs.Userid = userid
 	needs.Projectid = projectid
@@ -275,7 +275,7 @@ func (this *AddNeedsProjectController) Post() {
 	needs.Stage = stage
 	needs.Status = 2
 
-	err = AddNeeds(needs)
+	err = projects.AddNeeds(needs)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "需求添加成功", "id": fmt.Sprintf("%d", id)}
@@ -296,16 +296,16 @@ func (this *EditNeedsProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	needs, _ := GetProjectNeeds(int64(id))
+	needs, _ := projects.GetProjectNeeds(int64(id))
 
-	project, err := GetProject(needs.Projectid)
+	project, err := projects.GetProject(needs.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["project"] = project
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(project.Id, 1, 100)
+	_, _, teams := projects.ListProjectTeam(project.Id, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/needs-form.tpl"
@@ -369,7 +369,7 @@ func (this *EditNeedsProjectController) Post() {
 		}
 	}
 
-	var needs ProjectsNeeds
+	var needs projects.ProjectsNeeds
 	needs.Name = name
 	needs.Source = source
 	needs.Level = level
@@ -379,7 +379,7 @@ func (this *EditNeedsProjectController) Post() {
 	needs.Acceptance = acceptance
 	needs.Attachment = filepath
 	needs.Stage = stage
-	err = UpdateNeeds(needsid, needs)
+	err = projects.UpdateNeeds(needsid, needs)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "需求编辑成功"}

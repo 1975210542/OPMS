@@ -2,11 +2,12 @@ package expenses
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/expenses"
-	. "opms/models/messages"
-	. "opms/models/users"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/expenses"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/models/users"
+
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -44,10 +45,10 @@ func (this *ManageExpenseController) Get() {
 	condArr["result"] = result
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countExpense := CountExpense(condArr)
+	countExpense := expenses.CountExpense(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countExpense)
-	_, _, expenses := ListExpense(condArr, page, offset)
+	_, _, expenses := expenses.ListExpense(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -89,10 +90,10 @@ func (this *ApprovalExpenseController) Get() {
 	}
 	condArr["userid"] = fmt.Sprintf("%d", this.BaseController.UserUserId)
 
-	countExpense := CountExpenseApproval(condArr)
+	countExpense := expenses.CountExpenseApproval(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countExpense)
-	_, _, expenses := ListExpenseApproval(condArr, page, offset)
+	_, _, expenses := expenses.ListExpenseApproval(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -113,19 +114,19 @@ func (this *ShowExpenseController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
-	expense, err := GetExpense(int64(id))
+	expense, err := expenses.GetExpense(int64(id))
 	if err != nil {
 		this.Abort("404")
 
 	}
 	this.Data["expense"] = expense
-	_, _, approvers := ListExpenseApproverProcess(expense.Id)
+	_, _, approvers := expenses.ListExpenseApproverProcess(expense.Id)
 	this.Data["approvers"] = approvers
 
 	if this.BaseController.UserUserId != expense.Userid {
 
 		//检测是否可以审批和是否已审批过
-		checkApproverid, checkStatus := CheckExpenseApprover(expense.Id, this.BaseController.UserUserId)
+		checkApproverid, checkStatus := expenses.CheckExpenseApprover(expense.Id, this.BaseController.UserUserId)
 		if 0 == checkApproverid {
 			this.Abort("401")
 		}
@@ -188,16 +189,16 @@ func (this *ShowExpenseController) Post() {
 	}
 	summary := this.GetString("summary")
 
-	var expense ExpensesApprover
+	var expense expenses.ExpensesApprover
 	expense.Status = status
 	expense.Summary = summary
 	expense.Expenseid = expenseid
-	err := UpdateExpensesApprover(approverid, expense)
+	err := expenses.UpdateExpensesApprover(approverid, expense)
 
 	if err == nil {
 		//消息通知
-		exp, _ := GetExpense(expenseid)
-		var msg Messages
+		exp, _ := expenses.GetExpense(expenseid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = exp.Userid
@@ -209,7 +210,7 @@ func (this *ShowExpenseController) Post() {
 			msg.Title = "拒绝"
 		}
 		msg.Url = "/expense/approval/" + fmt.Sprintf("%d", expenseid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "审批成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "审批失败"}
@@ -226,10 +227,10 @@ func (this *AddExpenseController) Get() {
 	if !strings.Contains(this.GetSession("userPermission").(string), "expense-add") {
 		this.Abort("401")
 	}
-	var expense Expenses
-	this.Data["expense"] = expense
+	var exp expenses.Expenses
+	this.Data["expense"] = exp
 
-	_, _, users := ListUserFind()
+	_, _, users := users.ListUserFind()
 	this.Data["users"] = users
 
 	this.TplName = "expenses/form.tpl"
@@ -303,7 +304,7 @@ func (this *AddExpenseController) Post() {
 		}
 	}
 
-	var expense Expenses
+	var expense expenses.Expenses
 	expenseid := utils.SnowFlakeId()
 	expense.Id = expenseid
 	expense.Userid = this.BaseController.UserUserId
@@ -314,11 +315,11 @@ func (this *AddExpenseController) Post() {
 	expense.Picture = filepath
 	expense.Approverids = approverids
 
-	err = AddExpense(expense)
+	err = expenses.AddExpense(expense)
 
 	if err == nil {
 		//审批人入库
-		var expenseApp ExpensesApprover
+		var expenseApp expenses.ExpensesApprover
 		userids := strings.Split(approverids, ",")
 		for _, v := range userids {
 			userid, _ := strconv.Atoi(v)
@@ -326,7 +327,7 @@ func (this *AddExpenseController) Post() {
 			expenseApp.Id = id
 			expenseApp.Userid = int64(userid)
 			expenseApp.Expenseid = expenseid
-			AddExpensesApprover(expenseApp)
+			expenses.AddExpensesApprover(expenseApp)
 		}
 
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "添加成功。请‘我的报销单’中设置为正常，审批人才可以看到", "id": fmt.Sprintf("%d", expenseid)}
@@ -347,7 +348,7 @@ func (this *EditExpenseController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	expense, _ := GetExpense(int64(id))
+	expense, _ := expenses.GetExpense(int64(id))
 
 	if expense.Userid != this.BaseController.UserUserId {
 		this.Abort("401")
@@ -455,14 +456,14 @@ func (this *EditExpenseController) Post() {
 		}
 	}
 
-	var expense Expenses
+	var expense expenses.Expenses
 	expense.Amounts = strings.Join(amounts, "||")
 	expense.Types = strings.Join(types, "||")
 	expense.Contents = strings.Join(contents, "||")
 	expense.Total = total
 	expense.Picture = filepath
 
-	err = UpdateExpense(id, expense)
+	err = expenses.UpdateExpense(id, expense)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "报销修改成功", "id": fmt.Sprintf("%d", id)}
@@ -487,7 +488,7 @@ func (this *AjaxExpenseDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	expense, _ := GetExpense(int64(id))
+	expense, _ := expenses.GetExpense(int64(id))
 
 	if expense.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -499,7 +500,7 @@ func (this *AjaxExpenseDeleteController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := DeleteExpense(id)
+	err := expenses.DeleteExpense(id)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}
@@ -524,7 +525,7 @@ func (this *AjaxExpenseStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	expense, _ := GetExpense(int64(id))
+	expense, _ := expenses.GetExpense(int64(id))
 
 	if expense.Userid != this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "无权操作"}
@@ -536,14 +537,14 @@ func (this *AjaxExpenseStatusController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeExpenseStatus(id, 2)
+	err := expenses.ChangeExpenseStatus(id, 2)
 
 	if err == nil {
 		userids := strings.Split(expense.Approverids, ",")
 		for _, v := range userids {
 			//消息通知
 			userid, _ := strconv.Atoi(v)
-			var msg Messages
+			var msg messages.Messages
 			msg.Id = utils.SnowFlakeId()
 			msg.Userid = this.BaseController.UserUserId
 			msg.Touserid = int64(userid)
@@ -551,7 +552,7 @@ func (this *AjaxExpenseStatusController) Post() {
 			msg.Subtype = 33
 			msg.Title = "去审批处理"
 			msg.Url = "/expense/approval/" + fmt.Sprintf("%d", expense.Id)
-			AddMessages(msg)
+			messages.AddMessages(msg)
 		}
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态修改成功"}
 	} else {

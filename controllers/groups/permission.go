@@ -2,9 +2,10 @@ package groups
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/groups"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/groups"
+	"github.com/1975210542/OPMS/utils"
+
 	"strconv"
 	"strings"
 	//"time"
@@ -45,10 +46,10 @@ func (this *ManagePermissionController) Get() {
 	parentids = int64(parentidtmp)
 	this.Data["parentids"] = parentids
 
-	countPermission := CountPermission(condArr)
+	countPermission := groups.CountPermission(condArr)
 
 	paginator := pagination.SetPaginator(this.Ctx, offset, countPermission)
-	_, _, permissions := ListPermission(condArr, page, offset)
+	_, _, permissions := groups.ListPermission(condArr, page, offset)
 
 	this.Data["paginator"] = paginator
 	this.Data["condArr"] = condArr
@@ -58,7 +59,7 @@ func (this *ManagePermissionController) Get() {
 	//一级栏目
 	condArrP := make(map[string]string)
 	condArrP["parentid"] = "0"
-	_, _, parentpermissions := ListPermission(condArrP, 0, 100)
+	_, _, parentpermissions := groups.ListPermission(condArrP, 0, 100)
 	this.Data["parentpermissions"] = parentpermissions
 
 	this.TplName = "groups/permission.tpl"
@@ -69,7 +70,7 @@ type FormPermissionController struct {
 }
 
 func (this *FormPermissionController) Get() {
-	var permission Permissions
+	var permission groups.Permissions
 	idstr := this.Ctx.Input.Param(":id")
 	if "" != idstr {
 		//权限检测
@@ -77,7 +78,7 @@ func (this *FormPermissionController) Get() {
 			this.Abort("401")
 		}
 		id, _ := strconv.Atoi(idstr)
-		permission, _ = GetPermission(int64(id))
+		permission, _ = groups.GetPermission(int64(id))
 	} else {
 		//权限检测
 		if !strings.Contains(this.GetSession("userPermission").(string), "permission-add") {
@@ -90,7 +91,7 @@ func (this *FormPermissionController) Get() {
 	//一级栏目
 	condArr := make(map[string]string)
 	condArr["parentid"] = "0"
-	_, _, permissions := ListPermission(condArr, 0, 100)
+	_, _, permissions := groups.ListPermission(condArr, 0, 100)
 	this.Data["permissions"] = permissions
 
 	this.TplName = "groups/permission-form.tpl"
@@ -109,7 +110,7 @@ func (this *FormPermissionController) Post() {
 	weight, _ := this.GetInt("weight")
 	icon := this.GetString("icon")
 
-	var permission Permissions
+	var permission groups.Permissions
 	parentid, _ := this.GetInt64("parentid")
 	permission.Parentid = parentid
 	permission.Name = name
@@ -123,9 +124,9 @@ func (this *FormPermissionController) Post() {
 	if permissionid <= 0 {
 		permissionid = utils.SnowFlakeId()
 		permission.Id = permissionid
-		err = AddPermission(permission)
+		err = groups.AddPermission(permission)
 	} else {
-		err = UpdatePermission(permissionid, permission)
+		err = groups.UpdatePermission(permissionid, permission)
 	}
 
 	if err == nil {
@@ -154,7 +155,7 @@ func (this *AjaxDeletePermissionController) Post() {
 		return
 	}
 
-	err := DeletePermission(ids)
+	err := groups.DeletePermission(ids)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除成功"}

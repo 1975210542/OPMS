@@ -2,10 +2,10 @@ package albums
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/albums"
-	. "opms/models/messages"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/albums"
+	"github.com/1975210542/OPMS/models/messages"
+	"github.com/1975210542/OPMS/utils"
 )
 
 type AddCommentController struct {
@@ -27,18 +27,18 @@ func (this *AddCommentController) Post() {
 	}
 
 	var err error
-	var comment AlbumsComment
+	var comment albums.AlbumsComment
 	comment.Id = utils.SnowFlakeId()
 	comment.Userid = this.BaseController.UserUserId
 	comment.Albumid = albumid
 	comment.Content = content
 
-	err = AddAlbumComment(comment)
+	err = albums.AddAlbumComment(comment)
 
 	if err == nil {
 		//消息通知
-		album, _ := GetAlbum(albumid)
-		var msg Messages
+		album, _ := albums.GetAlbum(albumid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = album.Userid
@@ -46,7 +46,7 @@ func (this *AddCommentController) Post() {
 		msg.Subtype = 12
 		msg.Title = album.Title
 		msg.Url = "/album/" + fmt.Sprintf("%d", albumid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "评价添加成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "添加失败"}
@@ -66,24 +66,24 @@ func (this *AjaxLaudController) Post() {
 		return
 	}
 
-	laudexit, _ := GetAlbumLaud(albumid)
+	laudexit, _ := albums.GetAlbumLaud(albumid)
 	if laudexit.Userid == this.BaseController.UserUserId {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "已经点过赞"}
 		this.ServeJSON()
 	}
 
 	var err error
-	var laud AlbumsLaud
+	var laud albums.AlbumsLaud
 	laud.Id = utils.SnowFlakeId()
 	laud.Userid = this.BaseController.UserUserId
 	laud.Albumid = albumid
 
-	err = AddAlbumLaud(laud)
+	err = albums.AddAlbumLaud(laud)
 
 	if err == nil {
 		//消息通知
-		album, _ := GetAlbum(albumid)
-		var msg Messages
+		album, _ := albums.GetAlbum(albumid)
+		var msg messages.Messages
 		msg.Id = utils.SnowFlakeId()
 		msg.Userid = this.BaseController.UserUserId
 		msg.Touserid = album.Userid
@@ -91,7 +91,7 @@ func (this *AjaxLaudController) Post() {
 		msg.Subtype = 22
 		msg.Title = album.Title
 		msg.Url = "/album/" + fmt.Sprintf("%d", albumid)
-		AddMessages(msg)
+		messages.AddMessages(msg)
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "点赞成功"}
 	} else {
 		this.Data["json"] = map[string]interface{}{"code": 0, "message": "点赞失败"}

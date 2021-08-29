@@ -2,9 +2,9 @@ package projects
 
 import (
 	"fmt"
-	"opms/controllers"
-	. "opms/models/projects"
-	"opms/utils"
+	"github.com/1975210542/OPMS/controllers"
+	"github.com/1975210542/OPMS/models/projects"
+	"github.com/1975210542/OPMS/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -47,9 +47,9 @@ func (this *MyTaskProjectController) Get() {
 		filter = "accept"
 	}
 	condArr["filter"] = filter
-	countTask := CountTask(condArr)
+	countTask := projects.CountTask(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countTask)
-	_, _, tasks := ListProjectTask(condArr, page, offset)
+	_, _, tasks := projects.ListProjectTask(condArr, page, offset)
 
 	this.Data["tasks"] = tasks
 	this.Data["paginator"] = paginator
@@ -57,7 +57,7 @@ func (this *MyTaskProjectController) Get() {
 	this.Data["condArr"] = condArr
 	this.Data["countTask"] = countTask
 
-	_, _, teams := ListProjectTeam(0, 1, 100)
+	_, _, teams := projects.ListProjectTeam(0, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/mytask.tpl"
@@ -76,7 +76,7 @@ func (this *TaskProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -127,9 +127,9 @@ func (this *TaskProjectController) Get() {
 	}
 	condArr["filter"] = filter
 
-	countTask := CountTask(condArr)
+	countTask := projects.CountTask(condArr)
 	paginator := pagination.SetPaginator(this.Ctx, offset, countTask)
-	_, _, tasks := ListProjectTask(condArr, page, offset)
+	_, _, tasks := projects.ListProjectTask(condArr, page, offset)
 
 	this.Data["tasks"] = tasks
 	this.Data["paginator"] = paginator
@@ -137,7 +137,7 @@ func (this *TaskProjectController) Get() {
 	this.Data["condArr"] = condArr
 	this.Data["countTask"] = countTask
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/task.tpl"
@@ -150,16 +150,16 @@ type ShowTaskProjectController struct {
 func (this *ShowTaskProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	task, _ := GetProjectTask(int64(id))
+	task, _ := projects.GetProjectTask(int64(id))
 	this.Data["task"] = task
 
-	project, _ := GetProject(task.Projectid)
+	project, _ := projects.GetProject(task.Projectid)
 	this.Data["project"] = project
 
-	need, _ := GetProjectNeeds(task.Needsid)
+	need, _ := projects.GetProjectNeeds(task.Needsid)
 	this.Data["need"] = need
 
-	log := ListProjectTaskLog(task.Id)
+	log := projects.ListProjectTaskLog(task.Id)
 	this.Data["log"] = log
 	this.TplName = "projects/task-detail.tpl"
 }
@@ -187,7 +187,7 @@ func (this *AjaxStatusTaskController) Post() {
 		this.ServeJSON()
 		return
 	}
-	err := ChangeProjectTaskStatus(id, this.BaseController.UserUserId, status)
+	err := projects.ChangeProjectTaskStatus(id, this.BaseController.UserUserId, status)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "状态更改成功"}
@@ -217,7 +217,7 @@ func (this *AjaxAcceptTaskController) Post() {
 	acceptid, _ := this.GetInt64("acceptid")
 	note := this.GetString("note")
 
-	err := ChangeProjectTaskAccept(id, acceptid, this.BaseController.UserUserId, note)
+	err := projects.ChangeProjectTaskAccept(id, acceptid, this.BaseController.UserUserId, note)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "指派成功"}
@@ -239,16 +239,16 @@ func (this *TaskBatchProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["project"] = project
 
-	needs := ListNeedsForForm(idlong, 1, 100)
+	needs := projects.ListNeedsForForm(idlong, 1, 100)
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/task-batch-form.tpl"
@@ -289,7 +289,7 @@ func (this *TaskBatchProjectController) Post() {
 	this.Ctx.Input.Bind(&level, "level")
 	//fmt.Println(level)
 
-	var task ProjectsTask
+	var task projects.ProjectsTask
 	var err error
 	projectid, _ := this.GetInt64("projectid")
 	userid := this.BaseController.UserUserId
@@ -308,7 +308,7 @@ func (this *TaskBatchProjectController) Post() {
 			task.Type = typet[index]
 			task.Level = level[index]
 			task.Tasktime = tasktime[index]
-			err = AddTask(task)
+			err = projects.AddTask(task)
 		}
 
 	}
@@ -332,23 +332,23 @@ func (this *AddTaskProjectController) Get() {
 	idstr := this.Ctx.Input.Param(":id")
 	id, err := strconv.Atoi(idstr)
 	idlong := int64(id)
-	project, err := GetProject(idlong)
+	project, err := projects.GetProject(idlong)
 	if err != nil {
 		this.Abort("404")
 	}
 	this.Data["project"] = project
 
-	var task ProjectsTask
+	var task projects.ProjectsTask
 	task.Level = 0
 	task.Started = time.Now().Unix()
 	task.Ended = time.Now().Unix()
 	task.Needsid, _ = this.GetInt64("needsid")
 	this.Data["task"] = task
 
-	needs := ListNeedsForForm(idlong, 1, 100)
+	needs := projects.ListNeedsForForm(idlong, 1, 100)
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(idlong, 1, 100)
+	_, _, teams := projects.ListProjectTeam(idlong, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/task-form.tpl"
@@ -422,7 +422,7 @@ func (this *AddTaskProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var task ProjectsTask
+	var task projects.ProjectsTask
 	task.Id = id
 	task.Needsid = needsid
 	task.Projectid = projectid
@@ -439,7 +439,7 @@ func (this *AddTaskProjectController) Post() {
 	task.Ended = endedtime
 	task.Attachment = filepath
 
-	err = AddTask(task)
+	err = projects.AddTask(task)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "任务添加成功", "id": fmt.Sprintf("%d", id)}
@@ -460,9 +460,9 @@ func (this *EditTaskProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	task, _ := GetProjectTask(int64(id))
+	task, _ := projects.GetProjectTask(int64(id))
 
-	project, err := GetProject(task.Projectid)
+	project, err := projects.GetProject(task.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -477,10 +477,10 @@ func (this *EditTaskProjectController) Get() {
 	}
 	this.Data["ccids"] = ccidsmap
 
-	needs := ListNeedsForForm(task.Projectid, 1, 100)
+	needs := projects.ListNeedsForForm(task.Projectid, 1, 100)
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(task.Projectid, 1, 100)
+	_, _, teams := projects.ListProjectTeam(task.Projectid, 1, 100)
 	this.Data["teams"] = teams
 
 	this.TplName = "projects/task-form.tpl"
@@ -548,7 +548,7 @@ func (this *EditTaskProjectController) Post() {
 		}
 	}
 
-	var task ProjectsTask
+	var task projects.ProjectsTask
 	task.Needsid = needsid
 	task.Acceptid = acceptid
 	task.Ccid = ccid
@@ -563,7 +563,7 @@ func (this *EditTaskProjectController) Post() {
 	task.Attachment = filepath
 	task.Userid = this.BaseController.UserUserId
 
-	err = UpdateTask(taskid, task)
+	err = projects.UpdateTask(taskid, task)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "任务编辑成功"}
@@ -584,9 +584,9 @@ func (this *CloneTaskProjectController) Get() {
 	}
 	idstr := this.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idstr)
-	task, _ := GetProjectTask(int64(id))
+	task, _ := projects.GetProjectTask(int64(id))
 
-	project, err := GetProject(task.Projectid)
+	project, err := projects.GetProject(task.Projectid)
 	if err != nil {
 		this.Abort("404")
 	}
@@ -601,10 +601,10 @@ func (this *CloneTaskProjectController) Get() {
 	}
 	this.Data["ccids"] = ccidsmap
 
-	needs := ListNeedsForForm(task.Projectid, 1, 100)
+	needs := projects.ListNeedsForForm(task.Projectid, 1, 100)
 	this.Data["needs"] = needs
 
-	_, _, teams := ListProjectTeam(task.Projectid, 1, 100)
+	_, _, teams := projects.ListProjectTeam(task.Projectid, 1, 100)
 	this.Data["teams"] = teams
 	this.Data["clone"] = 1
 
@@ -678,7 +678,7 @@ func (this *CloneTaskProjectController) Post() {
 	//雪花算法ID生成
 	id := utils.SnowFlakeId()
 
-	var task ProjectsTask
+	var task projects.ProjectsTask
 	task.Id = id
 	task.Needsid = needsid
 	task.Projectid = projectid
@@ -695,7 +695,7 @@ func (this *CloneTaskProjectController) Post() {
 	task.Ended = endedtime
 	task.Attachment = filepath
 
-	err = AddTask(task)
+	err = projects.AddTask(task)
 
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "任务添加成功", "id": fmt.Sprintf("%d", id)}
@@ -723,7 +723,7 @@ func (this *DeleteTaskProjectController) Post() {
 		return
 	}
 
-	err := DeleteProjectTask(taskid)
+	err := projects.DeleteProjectTask(taskid)
 	if err == nil {
 		this.Data["json"] = map[string]interface{}{"code": 1, "message": "删除任务成功"}
 	} else {
