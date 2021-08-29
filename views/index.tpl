@@ -26,7 +26,7 @@
 		<br/><br/>
 			<a style="font-size:38px;" href="/user/show/{{.LoginUserid}}">开启OPMS之旅</a>
 			<br/><br/>
-			<a href="http://opms.milu365.cn" target="_blank">OPMS官网</a> &middot; <a href="http://opms.docs.milu365.cn" target="_blank">OPMS手册</a> &middot; <a href="http://opms.milu365.cn/update.html" target="_blank">版本更新</a>
+			<a href="https://www.baidu.com/" target="_blank">关于我们</a> &middot;
 			
         </div>
       </div>

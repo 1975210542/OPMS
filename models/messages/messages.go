@@ -27,7 +27,6 @@ func (this *Messages) TableName() string {
 }
 func init() {
 	orm.RegisterModel(new(Messages))
-	orm.RunSyncdb("default", true, true)
 }
 
 func AddMessages(upd Messages) error {

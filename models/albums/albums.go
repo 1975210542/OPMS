@@ -28,7 +28,6 @@ func (this *Albums) TableName() string {
 
 func init() {
 	orm.RegisterModel(new(Albums))
-	orm.RunSyncdb("default", true, true)
 }
 
 /*
