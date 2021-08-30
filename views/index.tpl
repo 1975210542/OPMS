@@ -24,9 +24,9 @@
         <div class="jumbotron text-center" style="background-color:transparent;">
           <h2>让项目管理与OA办公更加轻便！</h2>
 		<br/><br/>
-			<a style="font-size:38px;" href="/user/show/{{.LoginUserid}}">开启OPMS之旅</a>
+			<a style="font-size:38px;" href="/user/show/{{.LoginUserid}}">开启OA之旅</a>
 			<br/><br/>
-			<a href="https://www.baidu.com/" target="_blank">关于我们</a> &middot;
+			<a href="" target="_blank">@by qinakun 合作请加微信 gao1975210542</a> &middot;
 			
         </div>
       </div>

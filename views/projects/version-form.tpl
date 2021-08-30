@@ -18,7 +18,7 @@
     <div class="page-heading">
       <h3> 版本管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/project/version/{{.project.Id}}">{{.project.Name}}</a> </li>
         <li class="active"> 版本 </li>
       </ul>

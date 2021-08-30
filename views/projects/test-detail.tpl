@@ -21,7 +21,7 @@
     <div class="page-heading">
       <h3> 测试管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/project/test/{{.project.Id}}">{{.project.Name}}</a> </li>
         <li class="active"> Bug </li>
       </ul>

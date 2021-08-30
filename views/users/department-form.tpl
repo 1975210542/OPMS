@@ -17,7 +17,7 @@
     <div class="page-heading">
       <h3> 组织管理 {{template "users/nav.tpl" .}}</h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/department/manage">部门管理</a> </li>
         <li class="active"> 部门 </li>
       </ul>

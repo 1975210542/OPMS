@@ -31,7 +31,7 @@
     <div class="page-heading">
       <h3> 知识分享 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/knowledge/manage">知识分享</a> </li>
         <li class="active"> 知识 </li>
       </ul>

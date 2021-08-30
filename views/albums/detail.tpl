@@ -21,7 +21,7 @@
     <div class="page-heading">
       <h3> 精彩相片 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/album/manage">全部相片</a> </li>
         <li class="active"> 相片 </li>
       </ul>

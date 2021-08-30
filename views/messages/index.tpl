@@ -36,7 +36,7 @@
     <div class="page-heading">
       <h3> 消息管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/message/manage">消息管理</a> </li>
         <li class="active"> 消息 </li>
       </ul>

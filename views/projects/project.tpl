@@ -33,7 +33,7 @@
     <div class="page-heading">
       <h3> 项目管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/project/manage">项目管理</a> </li>
         <li class="active"> 项目 </li>
       </ul>

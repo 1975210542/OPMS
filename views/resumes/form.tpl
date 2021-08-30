@@ -17,7 +17,7 @@
     <div class="page-heading">
       <h3> 简历管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/resume/manage">简历管理</a> </li>
         <li class="active"> 简历 </li>
       </ul>

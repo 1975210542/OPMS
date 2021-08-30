@@ -35,7 +35,7 @@
     <div class="page-heading">
       <h3> 审批管理 {{template "inc/checkwork-nav.tpl" .}}</h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/businesstrip/manage">审批管理</a> </li>
         <li class="active"> 出差 </li>
       </ul>

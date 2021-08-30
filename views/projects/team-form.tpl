@@ -18,7 +18,7 @@
     <div class="page-heading">
       <h3> 项目管理 </h3>
       <ul class="breadcrumb pull-left">
-        <li> <a href="/user/show/{{.LoginUserid}}">OPMS</a> </li>
+        <li> <a href="/user/show/{{.LoginUserid}}">OA</a> </li>
         <li> <a href="/project/team/{{.project.Id}}">{{.project.Name}}</a> </li>
         <li class="active"> 团队成员 </li>
       </ul>

@@ -1,8 +1,8 @@
 <!-- left side start-->
 <div class="left-side sticky-left-side">
   <!--logo and iconic logo start-->
-  <div class="logo"> <a href="/"><img src="/static/img/logo-left.png" alt="OPMS管理系统"></a> </div>
-  <div class="logo-icon text-center"> <a href="/"><img src="/static/img/logo_icon.png" style="width:40px;" alt="OPMS管理系统"></a> </div>
+  <div class="logo"> <a href="/"><img src="/static/img/logo-left.png" alt="OA管理系统"></a> </div>
+  <div class="logo-icon text-center"> <a href="/"><img src="/static/img/logo_icon.png" style="width:40px;" alt="OA管理系统"></a> </div>
   <!--logo and iconic logo end-->
   <div class="left-side-inner">
     <!-- visible to small devices only -->
@@ -10,7 +10,7 @@
       <div class="media logged-user"> <img alt="{{.LoginUsername}}" src="{{getAvatar .LoginAvatar}}" class="media-object">
         <div class="media-body">
           <h4><a href="/user/show/{{.LoginUserid}}">{{.LoginUsername}}</a></h4>
-          <span>OPMS系统</span> </div>
+          <span>OA系统</span> </div>
       </div>
       <h5 class="left-nav-title">控制台</h5>
       <ul class="nav nav-pills nav-stacked custom-nav">
