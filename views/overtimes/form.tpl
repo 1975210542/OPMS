@@ -79,7 +79,7 @@
                 <div class="form-group">
                   <label class="col-sm-2 col-sm-2 control-label">加班事由</label>
                   <div class="col-sm-10">
-                    <textarea name="reason" placeholder="加班事由，如OPMS项目二期上线" style="height:200px;" class="form-control">{{.overtime.Reason}}</textarea>
+                    <textarea name="reason" placeholder="加班事由，如OA项目二期上线" style="height:200px;" class="form-control">{{.overtime.Reason}}</textarea>
                   </div>
                 </div>
                 
